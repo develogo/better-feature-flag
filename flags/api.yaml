@@ -1,0 +1,21 @@
+# ===== FLAGS DA API =====
+
+# New authentication method
+api-new-auth:
+  variations:
+    jwt: "jwt-auth"
+    oauth: "oauth-auth"
+    legacy: "legacy-auth"
+  targeting:
+    - query: environment eq "development"
+      variation: jwt
+  defaultRule:
+    variation: legacy
+
+# Cache strategy
+api-redis-cache:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: enabled

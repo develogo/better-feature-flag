@@ -1,0 +1,64 @@
+front-dark-mode:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+
+maintenance_mode:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: enabled
+
+maintenance_title:
+  variations:
+    title: "Estamos em manutenção"
+  defaultRule:
+    variation: title
+
+maintenance_message:
+  variations:
+    default: "Mensagem da manutenção"
+    urgent: "URGENTE: Sistema em manutenção!"
+    planned: "Manutenção programada em andamento"
+  defaultRule:
+    variation: default
+
+feedback_enabled:
+  variations:
+    enabled: true
+    disabled: false
+  targeting:
+    - query: targetingKey eq "14117d52-7e6d-4f48-95ed-ce024103d6eb"
+      variation: disabled
+  defaultRule:
+    variation: enabled
+
+force_update_enabled:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+
+minimum_app_version:
+  variations:
+    version: "1.2.0"
+  defaultRule:
+    variation: version
+
+update_title:
+  variations:
+    title: "Atualização Necessária"
+  defaultRule:
+    variation: title
+
+update_message:
+  variations:
+    default: "Atualize para continuar"
+    urgent: "URGENTE: Atualize para continuar"
+    planned: "Atualização programada em andamento"
+  defaultRule:
+    variation: default
