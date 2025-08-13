@@ -10,7 +10,7 @@ maintenance_mode:
     enabled: true
     disabled: false
   defaultRule:
-    variation: enabled
+    variation: disabled
 
 maintenance_title:
   variations:
@@ -45,7 +45,7 @@ force_update_enabled:
 
 minimum_app_version:
   variations:
-    version: "1.2.0"
+    version: "1.0.0"
   defaultRule:
     variation: version
 
