@@ -62,3 +62,26 @@ update_message:
     planned: "Atualização programada em andamento"
   defaultRule:
     variation: default
+
+# Exemplo de flag que é automaticamente carregada
+# Não precisa adicionar código em featureflag.go!
+new_dashboard:
+  variations:
+    enabled: true
+    disabled: false
+  targeting:
+    - query: app_version gte "2.0.0"
+      variation: enabled
+  defaultRule:
+    variation: enabled
+
+min_int_example:
+  variations:
+    one: 1
+    two: 2
+  defaultRule:
+    variation: two
+
+
+    
+  

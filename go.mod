@@ -9,6 +9,7 @@ require (
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/open-feature/go-sdk v1.9.0
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.1.26
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -17,6 +18,7 @@ require (
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/go-logr/logr v1.3.0 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
@@ -32,5 +34,5 @@ require (
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
+	golang.org/x/time v0.5.0 // indirect
 )

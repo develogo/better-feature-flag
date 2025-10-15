@@ -1,68 +1,352 @@
 # Better Feature Flag
 
-Este é um projeto Go integrado com GO Feature Flag para demonstrar como implementar feature flags em uma aplicação.
+Serviço Go para gerenciamento de feature flags integrado com GO Feature Flag, otimizado para consumo por aplicações Flutter.
 
-## Estrutura do Projeto
+## Arquitetura
 
-- `main.go` - API Go principal com integração do GO Feature Flag
-- `flags.goff.yaml` - Configuração das feature flags
-- `goff-proxy.yaml` - Configuração do relay proxy
-- `docker-compose.yml` - Para executar o relay proxy facilmente
+O projeto segue a arquitetura limpa (Clean Architecture) com separação em camadas:
+
+```
+src/
+├── cmd/server/main.go          # Entry point
+├── internal/
+│   ├── config/                 # Configurações e variáveis de ambiente
+│   ├── handlers/               # HTTP handlers (flags, health)
+│   ├── models/                 # Structs de request/response
+│   ├── middleware/             # JWT, logging, CORS
+│   └── services/               # Lógica de negócio (feature flags)
+```
+
+## Features
+
+- ✅ Feature flags com GO Feature Flag
+- ✅ Autenticação JWT opcional
+- ✅ Logs estruturados em JSON
+- ✅ Health checks (liveness e readiness)
+- ✅ CORS configurado para Flutter
+- ✅ Graceful shutdown
+- ✅ Configuração via variáveis de ambiente
+
+## Requisitos
+
+- Go 1.23+
+- Docker (para GO Feature Flag relay proxy)
+
+## Configuração
+
+1. Copie o arquivo de exemplo:
+```bash
+cp .env.example .env
+```
+
+2. Edite `.env` com suas configurações:
+```env
+JWT_SECRET=sua-chave-secreta-aqui
+SERVER_PORT=1324
+GOFF_ENDPOINT=http://localhost:1031
+ENVIRONMENT=development
+```
+
+⚠️ **Importante**: Em produção, use variáveis de ambiente seguras e não commite o arquivo `.env`.
 
 ## Como Executar
 
-### 1. Instalar Dependências
+### Opção 1: Usando Makefile (Recomendado)
+
 ```bash
-go mod tidy
+# Iniciar ambiente completo (docker + api)
+make dev
+
+# Ou em etapas separadas:
+make docker-up  # Inicia GO Feature Flag
+make run        # Executa a API
 ```
 
-### 2. Iniciar o GO Feature Flag Relay Proxy
+### Opção 2: Manual
 
-**Opção 1 - Usando Docker Compose (mais fácil):**
+#### 1. Instalar Dependências
+```bash
+go mod download
+```
+
+#### 2. Configurar variáveis de ambiente
+```bash
+cp env.example .env
+# Edite o .env com suas configurações
+```
+
+#### 3. Iniciar GO Feature Flag Relay Proxy
 ```bash
 docker-compose up -d
 ```
 
-**Opção 2 - Comando Docker direto (como na documentação oficial):**
+#### 4. Executar a API
 ```bash
-docker run -p 1031:1031 -v $(pwd)/flags.goff.yaml:/goff/flags.goff.yaml -v $(pwd)/goff-proxy.yaml:/goff/goff-proxy.yaml gofeatureflag/go-feature-flag:latest
+# Configurar as variáveis de ambiente primeiro
+export JWT_SECRET=minha-chave-secreta-super-segura
+export SERVER_PORT=1324
+export GOFF_ENDPOINT=http://localhost:1031
+export ENVIRONMENT=development
+
+# Executar
+go run src/cmd/server/main.go
 ```
 
-### 3. Executar a API
+### Outros comandos úteis
+
 ```bash
-go run main.go
+make build       # Compila o binário
+make docker-down # Para o GO Feature Flag
+make clean       # Remove arquivos compilados
+make help        # Lista todos os comandos
 ```
 
-### 4. Testar a API
+## Endpoints
 
-Sem mostrar email (usuário padrão):
+### Health Checks
+
+#### Liveness Probe
 ```bash
-curl -H "X-USER-ID: 2" http://localhost:1323
+GET /health
+```
+Verifica se a aplicação está rodando.
+
+**Response:**
+```json
+{
+  "status": "ok"
+}
 ```
 
-Com email (usuário com ID 1):
+#### Readiness Probe
 ```bash
-curl -H "X-USER-ID: 1" http://localhost:1323
+GET /ready
+```
+Verifica se a aplicação está pronta para receber tráfego (checa conectividade com GO Feature Flag).
+
+**Response (pronto):**
+```json
+{
+  "status": "ready"
+}
+```
+
+**Response (não pronto):**
+```json
+{
+  "status": "unavailable",
+  "message": "GO Feature Flag service is not available"
+}
+```
+
+### Feature Flags
+
+#### Obter Flags
+```bash
+GET /api/v1/flags
+```
+
+**Headers esperados do Flutter:**
+- `Authorization: Bearer <token>` (opcional - se o usuário estiver autenticado)
+- `X-App-Version: 1.2.0` (versão do app)
+- `X-Platform: android` ou `ios`
+- `X-Device-ID: <uuid>` (se não autenticado, usar device ID)
+
+**Exemplos:**
+
+Usuário autenticado:
+```bash
+curl -X GET http://localhost:1324/api/v1/flags \
+  -H "Authorization: Bearer eyJhbGc..." \
+  -H "X-App-Version: 1.2.0" \
+  -H "X-Platform: android"
+```
+
+Usuário anônimo:
+```bash
+curl -X GET http://localhost:1324/api/v1/flags \
+  -H "X-App-Version: 1.2.0" \
+  -H "X-Platform: ios" \
+  -H "X-Device-ID: 550e8400-e29b-41d4-a716-446655440000"
+```
+
+**Response:**
+```json
+{
+  "flags": {
+    "front-dark-mode": false,
+    "maintenance_mode": false,
+    "maintenance_title": "Título da Manutenção",
+    "maintenance_message": "Mensagem da manutenção",
+    "feedback_enabled": true,
+    "force_update_enabled": false,
+    "minimum_app_version": "1.0.0",
+    "update_title": "Atualização Necessária",
+    "update_message": "Atualize para continuar"
+  }
+}
 ```
 
 ## Configuração das Feature Flags
 
-As flags estão configuradas no arquivo `flags.goff.yaml`. Você pode modificar as regras de targeting e ver as mudanças em tempo real sem reiniciar a aplicação.
+As flags são configuradas nos arquivos YAML em `/flags`:
 
-### Exemplo de configuração avançada:
+- `front.yaml` - Flags do frontend/mobile
+- `api.yaml` - Flags da API
+- `shared.yaml` - Flags compartilhadas
 
+### Exemplo de targeting por usuário:
 ```yaml
-show-email-contact:
+feedback_enabled:
   variations:
     enabled: true
     disabled: false
   targeting:
-    - query: targetingKey eq "1"
+    - query: targetingKey eq "user-id-123"
+      variation: disabled
+  defaultRule:
+    variation: enabled
+```
+
+### Exemplo de targeting por versão do app:
+```yaml
+force_update_enabled:
+  variations:
+    enabled: true
+    disabled: false
+  targeting:
+    - query: app_version lt "1.2.0"
       variation: enabled
   defaultRule:
     variation: disabled
 ```
 
-## Endpoints
+### Exemplo de targeting por plataforma:
+```yaml
+new_feature:
+  variations:
+    enabled: true
+    disabled: false
+  targeting:
+    - query: platform eq "android"
+      variation: enabled
+  defaultRule:
+    variation: disabled
+```
 
-- `GET /` - Retorna informações do usuário, incluindo email se a flag estiver habilitada para o usuário 
+## Integração Flutter
+
+### Exemplo de código Flutter:
+
+```dart
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+class FeatureFlagService {
+  final String baseUrl = 'http://localhost:1324';
+  
+  Future<Map<String, dynamic>> getFlags({String? authToken}) async {
+    final headers = {
+      'X-App-Version': '1.2.0',
+      'X-Platform': Platform.isAndroid ? 'android' : 'ios',
+    };
+    
+    if (authToken != null) {
+      headers['Authorization'] = 'Bearer $authToken';
+    } else {
+      // Se não autenticado, enviar device ID
+      headers['X-Device-ID'] = await getDeviceId();
+    }
+    
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/v1/flags'),
+      headers: headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return json.decode(response.body)['flags'];
+    } else {
+      throw Exception('Failed to load flags');
+    }
+  }
+}
+```
+
+## Desenvolvimento
+
+### Estrutura de logs
+
+Os logs são emitidos em formato JSON estruturado:
+
+```json
+{
+  "time": "2025-10-15T10:30:00Z",
+  "level": "INFO",
+  "msg": "request",
+  "method": "GET",
+  "path": "/api/v1/flags",
+  "status": 200,
+  "latency": 15000000,
+  "ip": "127.0.0.1"
+}
+```
+
+### Adicionando novas flags
+
+**Simples! Apenas adicione no YAML:**
+
+1. Adicione a definição no arquivo YAML apropriado em `/flags` (front.yaml, api.yaml ou shared.yaml)
+2. Pronto! A flag será automaticamente descoberta e avaliada pela API
+
+**Não é necessário modificar código Go.** O sistema:
+- Lê todos os arquivos `.yaml` da pasta `/flags` no startup
+- Detecta automaticamente todas as flags e seus tipos (bool, string, number)
+- Avalia cada flag usando o OpenFeature SDK com contexto do usuário
+
+Exemplo:
+```yaml
+# flags/front.yaml
+nova_feature:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+```
+
+A flag `nova_feature` estará disponível imediatamente no response do endpoint `/api/v1/flags` após reiniciar o servidor (ou o GO Feature Flag recarregar o arquivo automaticamente a cada 1s).
+
+Veja `flags/README.md` para mais exemplos e documentação completa sobre targeting e configuração de flags.
+
+## Produção
+
+### Checklist de segurança:
+
+- [ ] Usar `JWT_SECRET` forte e aleatório
+- [ ] Configurar `CORS` com domínios específicos em `src/internal/middleware/cors.go`
+- [ ] Usar HTTPS
+- [ ] Configurar rate limiting (adicionar middleware)
+- [ ] Monitorar logs e métricas
+- [ ] Configurar health checks no orquestrador (Kubernetes, ECS, etc)
+
+### Docker
+
+```dockerfile
+# Exemplo de Dockerfile
+FROM golang:1.23-alpine AS builder
+WORKDIR /app
+COPY . .
+RUN go mod download
+RUN CGO_ENABLED=0 go build -o server src/cmd/server/main.go
+
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+COPY --from=builder /app/server .
+EXPOSE 1324
+CMD ["./server"]
+```
+
+## Licença
+
+MIT
