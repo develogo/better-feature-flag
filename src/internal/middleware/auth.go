@@ -2,26 +2,19 @@ package middleware
 
 import (
 	"better-feature-flag/src/internal/models"
+	"better-feature-flag/src/internal/services"
 	"strings"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
 
-type Claims struct {
-	Sub      string `json:"sub"`
-	Email    string `json:"email"`
-	Username string `json:"preferred_username"`
-	jwt.RegisteredClaims
-}
-
 type AuthMiddleware struct {
-	jwtSecret string
+	keycloakService *services.KeycloakService
 }
 
-func NewAuthMiddleware(jwtSecret string) *AuthMiddleware {
+func NewAuthMiddleware(keycloakService *services.KeycloakService) *AuthMiddleware {
 	return &AuthMiddleware{
-		jwtSecret: jwtSecret,
+		keycloakService: keycloakService,
 	}
 }
 
@@ -34,7 +27,8 @@ func (m *AuthMiddleware) OptionalJWT() echo.MiddlewareFunc {
 			// Tenta extrair info do JWT se presente
 			authHeader := c.Request().Header.Get("Authorization")
 			if authHeader != "" {
-				if claims, err := m.extractAndValidateJWT(authHeader); err == nil {
+				tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+				if claims, err := m.keycloakService.ValidateToken(c.Request().Context(), tokenString); err == nil {
 					clientCtx.UserID = claims.Sub
 					clientCtx.Email = claims.Email
 					clientCtx.Username = claims.Username
@@ -52,24 +46,6 @@ func (m *AuthMiddleware) OptionalJWT() echo.MiddlewareFunc {
 			return next(c)
 		}
 	}
-}
-
-func (m *AuthMiddleware) extractAndValidateJWT(authHeader string) (*Claims, error) {
-	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(m.jwtSecret), nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-		return claims, nil
-	}
-
-	return nil, jwt.ErrTokenInvalidClaims
 }
 
 func GetClientContext(c echo.Context) *models.ClientContext {

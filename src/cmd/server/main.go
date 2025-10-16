@@ -43,12 +43,27 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Inicializa Keycloak Service
+	keycloakService := services.NewKeycloakService(
+		cfg.KeycloakURL,
+		cfg.KeycloakRealm,
+		cfg.KeycloakClientID,
+		cfg.KeycloakClientSecret,
+		logger,
+	)
+
+	logger.Info("keycloak service initialized",
+		slog.String("url", cfg.KeycloakURL),
+		slog.String("realm", cfg.KeycloakRealm),
+		slog.String("client_id", cfg.KeycloakClientID),
+	)
+
 	// Inicializa handlers
 	flagsHandler := handlers.NewFlagsHandler(ffService, logger)
 	healthHandler := handlers.NewHealthHandler(ffService, logger)
 
 	// Inicializa middlewares
-	authMiddleware := middleware.NewAuthMiddleware(cfg.JWTSecret)
+	authMiddleware := middleware.NewAuthMiddleware(keycloakService)
 
 	// Setup Echo
 	e := echo.New()
