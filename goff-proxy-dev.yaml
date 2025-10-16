@@ -6,14 +6,6 @@ retrievers:
   - kind: file
     path: /goff/flags/flutter/dev.yaml
   
-  # User API flags
-  - kind: file
-    path: /goff/flags/user-api/dev.yaml
-  
-  # Payment API flags
-  - kind: file
-    path: /goff/flags/payment-api/dev.yaml
-  
   # Shared flags
   - kind: file
     path: /goff/flags/shared/dev.yaml
