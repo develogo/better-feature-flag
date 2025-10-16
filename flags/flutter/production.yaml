@@ -1,6 +1,6 @@
 # ===== FLUTTER APP - PRODUCTION =====
 
-front-dark-mode:
+dark-mode:
   variations:
     enabled: true
     disabled: false
@@ -13,20 +13,6 @@ maintenance_mode:
     disabled: false
   defaultRule:
     variation: disabled
-
-maintenance_title:
-  variations:
-    title: "Estamos em manutenção"
-  defaultRule:
-    variation: title
-
-maintenance_message:
-  variations:
-    default: "Sistema em manutenção. Voltaremos em breve."
-    urgent: "Manutenção de emergência em andamento"
-    planned: "Manutenção programada. Previsão: 2h"
-  defaultRule:
-    variation: default
 
 feedback_enabled:
   variations:
@@ -48,22 +34,4 @@ minimum_app_version:
   defaultRule:
     variation: version
 
-update_title:
-  variations:
-    title: "Atualização Necessária"
-  defaultRule:
-    variation: title
-
-update_message:
-  variations:
-    default: "Por favor, atualize o aplicativo para continuar"
-  defaultRule:
-    variation: default
-
-new_dashboard:
-  variations:
-    enabled: true
-    disabled: false
-  defaultRule:
-    variation: disabled
 

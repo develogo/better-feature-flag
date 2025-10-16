@@ -1,12 +1,17 @@
 package models
 
 type ClientContext struct {
-	AppVersion string
-	Platform   string
-	DeviceID   string
-	UserID     string
-	Email      string
-	Username   string
+	UserID          string
+	Email           string
+	Username        string
+	DeviceID        string
+	Architecture    string // Sec-CH-UA-Arch
+	DeviceModel     string // Sec-CH-UA-Model
+	Platform        string // Sec-CH-UA-Platform
+	PlatformVersion string // Sec-CH-UA-Platform-Version
+	UserAgent       string // Sec-CH-UA
+	AppVersion      string // Sec-CH-UA-Full-Version
+	IsMobile        string // Sec-CH-UA-Mobile
 }
 
 func (c *ClientContext) GetTargetingKey() string {

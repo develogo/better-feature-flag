@@ -36,9 +36,16 @@ func (m *AuthMiddleware) OptionalJWT() echo.MiddlewareFunc {
 			}
 
 			// Extrai headers do Flutter
-			clientCtx.AppVersion = c.Request().Header.Get("X-App-Version")
-			clientCtx.Platform = c.Request().Header.Get("X-Platform")
-			clientCtx.DeviceID = c.Request().Header.Get("X-Device-ID")
+			clientCtx.DeviceID = c.Request().Header.Get("Device-ID")
+
+			// Extrai User-Agent Client Hints
+			clientCtx.Architecture = c.Request().Header.Get("Sec-CH-UA-Arch")
+			clientCtx.DeviceModel = c.Request().Header.Get("Sec-CH-UA-Model")
+			clientCtx.Platform = c.Request().Header.Get("Sec-CH-UA-Platform")
+			clientCtx.PlatformVersion = c.Request().Header.Get("Sec-CH-UA-Platform-Version")
+			clientCtx.AppVersion = c.Request().Header.Get("Sec-CH-UA-Full-Version")
+			clientCtx.IsMobile = c.Request().Header.Get("Sec-CH-UA-Mobile")
+			clientCtx.UserAgent = c.Request().Header.Get("Sec-CH-UA")
 
 			// Armazena no contexto do Echo
 			c.Set("client_context", clientCtx)

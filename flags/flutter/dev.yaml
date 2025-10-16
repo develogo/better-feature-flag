@@ -1,6 +1,6 @@
 # ===== FLUTTER APP - DEVELOPMENT =====
 
-front-dark-mode:
+dark_mode:
   variations:
     enabled: true
     disabled: false
@@ -13,20 +13,6 @@ maintenance_mode:
     disabled: false
   defaultRule:
     variation: disabled
-
-maintenance_title:
-  variations:
-    title: "Estamos em manutenção"
-  defaultRule:
-    variation: title
-
-maintenance_message:
-  variations:
-    default: "Mensagem da manutenção"
-    urgent: "URGENTE: Sistema em manutenção!"
-    planned: "Manutenção programada em andamento"
-  defaultRule:
-    variation: default
 
 feedback_enabled:
   variations:
@@ -50,42 +36,4 @@ minimum_app_version:
     version: "1.0.0"
   defaultRule:
     variation: version
-
-update_title:
-  variations:
-    title: "Atualização Necessária"
-  defaultRule:
-    variation: title
-
-update_message:
-  variations:
-    default: "Atualize para continuar"
-    urgent: "URGENTE: Atualize para continuar"
-    planned: "Atualização programada em andamento"
-  defaultRule:
-    variation: default
-
-# Exemplo de targeting por plataforma
-android_only_feature:
-  variations:
-    enabled: true
-    disabled: false
-  targeting:
-    - query: platform eq "android"
-      variation: enabled
-  defaultRule:
-    variation: disabled
-
-# Exemplo de targeting por versão E plataforma
-new_dashboard:
-  variations:
-    enabled: true
-    disabled: false
-  targeting:
-    - query: platform eq "ios" AND app_version >= "2.0.0"
-      variation: enabled
-    - query: platform eq "android" AND app_version >= "1.5.0"
-      variation: enabled
-  defaultRule:
-    variation: disabled
 
