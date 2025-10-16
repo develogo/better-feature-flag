@@ -1,3 +1,5 @@
+# ===== FLUTTER APP - PRODUCTION =====
+
 front-dark-mode:
   variations:
     enabled: true
@@ -20,9 +22,9 @@ maintenance_title:
 
 maintenance_message:
   variations:
-    default: "Mensagem da manutenção"
-    urgent: "URGENTE: Sistema em manutenção!"
-    planned: "Manutenção programada em andamento"
+    default: "Sistema em manutenção. Voltaremos em breve."
+    urgent: "Manutenção de emergência em andamento"
+    planned: "Manutenção programada. Previsão: 2h"
   defaultRule:
     variation: default
 
@@ -30,9 +32,6 @@ feedback_enabled:
   variations:
     enabled: true
     disabled: false
-  targeting:
-    - query: targetingKey eq "14117d52-7e6d-4f48-95ed-ce024103d6eb"
-      variation: disabled
   defaultRule:
     variation: enabled
 
@@ -57,30 +56,14 @@ update_title:
 
 update_message:
   variations:
-    default: "Atualize para continuar"
-    urgent: "URGENTE: Atualize para continuar"
-    planned: "Atualização programada em andamento"
+    default: "Por favor, atualize o aplicativo para continuar"
   defaultRule:
     variation: default
 
-# Exemplo de flag com targeting por versão do app
 new_dashboard:
   variations:
     enabled: true
     disabled: false
-  targeting:
-    - query: app_version gte "2.0.0"
-      variation: enabled
   defaultRule:
     variation: disabled
 
-min_int_example:
-  variations:
-    one: 1
-    two: 2
-  defaultRule:
-    variation: two
-
-
-    
-  

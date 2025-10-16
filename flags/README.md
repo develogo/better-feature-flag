@@ -1,21 +1,170 @@
-# Feature Flags Configuration
+# Feature Flags - Organização Multi-Aplicação e Ambientes
 
-Este diretório contém os arquivos YAML com as definições das feature flags.
+Este diretório contém as feature flags organizadas por **aplicação** e **ambiente**.
 
-## Arquivos
+## Estrutura de Diretórios
 
-- `front.yaml` - Flags para o frontend/mobile
-- `api.yaml` - Flags para a API backend
-- `shared.yaml` - Flags compartilhadas entre frontend e backend
+```
+flags/
+├── flutter/                  # Flags para aplicativo Flutter
+│   ├── dev.yaml             # Desenvolvimento
+│   ├── staging.yaml         # Homologação
+│   └── production.yaml      # Produção
+│
+├── user-api/                 # Flags para API de usuários
+│   ├── dev.yaml
+│   ├── staging.yaml
+│   └── production.yaml
+│
+├── payment-api/              # Flags para API de pagamentos
+│   ├── dev.yaml
+│   ├── staging.yaml
+│   └── production.yaml
+│
+└── shared/                   # Flags compartilhadas entre todas as apps
+    ├── dev.yaml
+    ├── staging.yaml
+    └── production.yaml
+```
+
+## Como Funciona
+
+### 1. Relay Proxy Carrega Flags por Ambiente
+
+O relay proxy usa diferentes arquivos de configuração baseado na variável `ENVIRONMENT`:
+
+```bash
+# Development (padrão)
+ENVIRONMENT=dev docker-compose up
+
+# Staging
+ENVIRONMENT=staging docker-compose up
+
+# Production
+ENVIRONMENT=production docker-compose up
+```
+
+Cada ambiente carrega apenas os arquivos correspondentes:
+- `dev` → carrega todos os `*/dev.yaml`
+- `staging` → carrega todos os `*/staging.yaml`
+- `production` → carrega todos os `*/production.yaml`
+
+### 2. Cada Aplicação Consume Suas Flags
+
+**Flutter App:**
+```dart
+// Chama a Flag API que avalia flags de flutter/{env}.yaml
+final flags = await FeatureFlagService().getAllFlags();
+if (flags['maintenance_mode']) {
+  showMaintenanceScreen();
+}
+```
+
+**User API (Go):**
+```go
+// SDK conecta no relay proxy e avalia flags de user-api/{env}.yaml
+enabled, _ := client.BooleanValue(ctx, "registration-enabled", true, evalCtx)
+```
+
+**Payment API (Go):**
+```go
+// SDK conecta no relay proxy e avalia flags de payment-api/{env}.yaml
+useStripe, _ := client.BooleanValue(ctx, "payment-use-stripe", false, evalCtx)
+```
+
+**Flags Compartilhadas:**
+```go
+// Qualquer app pode acessar flags de shared/{env}.yaml
+maintenanceMode, _ := client.BooleanValue(ctx, "maintenance-mode", false, evalCtx)
+```
+
+## Quando Usar Cada Diretório
+
+### `flutter/`
+Flags específicas para o app móvel:
+- UI features (dark mode, new screens)
+- App behavior (force update, feedback)
+- Mobile-specific settings
+
+### `user-api/`
+Flags específicas para API de usuários:
+- Registration settings
+- Authentication methods
+- User profile features
+
+### `payment-api/`
+Flags específicas para API de pagamentos:
+- Payment providers (Stripe, PayPal)
+- Transaction limits
+- Refund policies
+
+### `shared/`
+Flags que afetam TODAS as aplicações:
+- `maintenance-mode` - Desliga tudo
+- `redis-cache-enabled` - Comportamento global de cache
+- `log-level` - Nível de log em todos os serviços
+- `rate-limit-enabled` - Rate limiting global
 
 ## Como Adicionar Uma Nova Flag
 
-**Não é necessário modificar código Go!** Apenas adicione a flag no arquivo YAML apropriado e ela será automaticamente avaliada e retornada pela API.
+### Passo 1: Escolha o Diretório Correto
 
-### Exemplo: Flag Booleana
+**Pergunta:** Onde essa flag será usada?
+- Apenas no Flutter? → `flutter/{env}.yaml`
+- Apenas na User API? → `user-api/{env}.yaml`
+- Em múltiplas apps? → `shared/{env}.yaml`
+
+### Passo 2: Adicione nos 3 Ambientes
 
 ```yaml
-nova_feature_enabled:
+# flags/flutter/dev.yaml
+nova_feature:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: enabled  # Habilitado em dev
+
+# flags/flutter/staging.yaml
+nova_feature:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: enabled  # Habilitado em staging
+
+# flags/flutter/production.yaml
+nova_feature:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled  # Desabilitado em prod (rollout gradual)
+```
+
+### Passo 3: Se For Para Flutter, Adicione no Código
+
+```go
+// src/internal/services/featureflag.go
+func (s *FeatureFlagService) EvaluateAllFlags(...) {
+    // ... flags existentes
+    
+    flags["nova_feature"], _ = s.client.BooleanValue(ctx, "nova_feature", false, evalCtx)
+}
+```
+
+### Passo 4: Reinicie o Relay Proxy (Se Necessário)
+
+Mudanças nos YAMLs são detectadas automaticamente, mas se adicionar um novo arquivo:
+```bash
+docker-compose restart go-feature-flag
+```
+
+## Exemplos de Flags por Tipo
+
+### Flag Booleana
+```yaml
+feature_enabled:
   variations:
     enabled: true
     disabled: false
@@ -23,47 +172,42 @@ nova_feature_enabled:
     variation: disabled
 ```
 
-### Exemplo: Flag String
-
+### Flag String
 ```yaml
 welcome_message:
   variations:
     default: "Bem-vindo!"
-    special: "Bem-vindo, usuário especial!"
+    premium: "Bem-vindo, usuário premium!"
   defaultRule:
     variation: default
 ```
 
-### Exemplo: Flag Numérica
-
+### Flag Numérica
 ```yaml
-max_items_per_page:
+max_items:
   variations:
-    small: 10
-    medium: 25
-    large: 50
+    low: 10
+    high: 100
   defaultRule:
-    variation: medium
+    variation: low
 ```
 
-## Targeting (Direcionamento)
+## Targeting (Segmentação)
 
 ### Por Usuário Específico
-
 ```yaml
 beta_feature:
   variations:
     enabled: true
     disabled: false
   targeting:
-    - query: targetingKey eq "user-id-123"
+    - query: targetingKey eq "user-123"
       variation: enabled
   defaultRule:
     variation: disabled
 ```
 
 ### Por Versão do App
-
 ```yaml
 new_ui:
   variations:
@@ -77,9 +221,8 @@ new_ui:
 ```
 
 ### Por Plataforma
-
 ```yaml
-android_only_feature:
+android_feature:
   variations:
     enabled: true
     disabled: false
@@ -90,53 +233,7 @@ android_only_feature:
     variation: disabled
 ```
 
-### Múltiplas Condições
-
-```yaml
-premium_feature:
-  variations:
-    enabled: true
-    disabled: false
-  targeting:
-    # Usuários premium no Android com app >= 2.0
-    - query: platform eq "android" AND app_version gte "2.0.0" AND user_id contains "premium"
-      variation: enabled
-    # Todos os usuários no iOS
-    - query: platform eq "ios"
-      variation: enabled
-  defaultRule:
-    variation: disabled
-```
-
-## Atributos Disponíveis para Targeting
-
-Estes atributos são automaticamente enviados pelo serviço:
-
-- `targetingKey` - ID do usuário (se autenticado) ou device ID
-- `app_version` - Versão do app (header `X-App-Version`)
-- `platform` - Plataforma: "android" ou "ios" (header `X-Platform`)
-- `user_id` - ID do usuário (se autenticado)
-- `email` - Email do usuário (se autenticado)
-- `username` - Username do usuário (se autenticado)
-- `device_id` - ID do dispositivo (se não autenticado)
-
-## Operadores Disponíveis
-
-- `eq` - Igual
-- `ne` - Diferente
-- `lt` - Menor que
-- `lte` - Menor ou igual
-- `gt` - Maior que
-- `gte` - Maior ou igual
-- `contains` - Contém (strings)
-- `startsWith` - Começa com
-- `endsWith` - Termina com
-- `matches` - Regex
-- `AND` - E lógico
-- `OR` - Ou lógico
-
-## Rollout Progressivo
-
+### Rollout Progressivo (Percentage)
 ```yaml
 gradual_rollout:
   variations:
@@ -144,33 +241,153 @@ gradual_rollout:
     disabled: false
   defaultRule:
     percentage:
-      enabled: 50  # 50% dos usuários verão habilitado
-      disabled: 50
+      enabled: 10   # 10% dos usuários
+      disabled: 90
 ```
 
-## Reload Automático
+## Estratégias de Rollout por Ambiente
 
-O GO Feature Flag verifica mudanças nos arquivos YAML automaticamente a cada segundo (configurado em `goff-proxy.yaml`). Não é necessário reiniciar o serviço para aplicar mudanças.
+### Development
+- Todas as features habilitadas
+- Targeting mínimo
+- Valores permissivos
 
-## Testando Flags
+### Staging
+- Algumas features habilitadas
+- Targeting similar à produção
+- Valores realistas
 
+### Production
+- Features desabilitadas por padrão
+- Rollout gradual (percentage)
+- Targeting específico
+- Valores conservadores
+
+## Atributos Disponíveis para Targeting
+
+Automaticamente enviados pela aplicação:
+
+**Flutter:**
+- `targetingKey` - User ID ou Device ID
+- `app_version` - Versão do app
+- `platform` - "android" ou "ios"
+- `user_id` - ID do usuário (se autenticado)
+- `device_id` - ID do dispositivo (se não autenticado)
+
+**APIs Go:**
+- `targetingKey` - User ID
+- `email` - Email do usuário
+- `username` - Username
+- Qualquer atributo customizado que você adicionar
+
+## Operadores de Query
+
+- `eq` - Igual
+- `ne` - Diferente
+- `lt` - Menor que
+- `lte` - Menor ou igual
+- `gt` - Maior que
+- `gte` - Maior ou igual
+- `contains` - Contém
+- `startsWith` - Começa com
+- `endsWith` - Termina com
+- `matches` - Regex
+- `AND` / `OR` - Combinação de condições
+
+## Boas Práticas
+
+### ✅ Faça
+
+1. **Use nomes descritivos**
+   - ✅ `registration-email-verification-enabled`
+   - ❌ `flag1`
+
+2. **Organize por aplicação**
+   - Se usado só no Flutter → `flutter/`
+   - Se usado só na User API → `user-api/`
+
+3. **Mantenha consistência entre ambientes**
+   - Mesmas flags nos 3 arquivos (dev, staging, prod)
+   - Apenas variações nos valores
+
+4. **Documente flags complexas**
+   ```yaml
+   # Esta flag controla o novo fluxo de onboarding
+   # Habilitada apenas para usuários iOS >= 14
+   new_onboarding:
+     variations:
+       enabled: true
+       disabled: false
+   ```
+
+5. **Use percentage para rollout gradual**
+   ```yaml
+   defaultRule:
+     percentage:
+       enabled: 25  # Começa com 25%
+       disabled: 75
+   ```
+
+### ❌ Evite
+
+1. **Flags órfãs** - Remova flags não usadas
+2. **Duplicação** - Não crie a mesma flag em múltiplos lugares
+3. **Valores hardcoded** - Use flags mesmo em dev
+4. **Targeting sem fallback** - Sempre tenha defaultRule
+
+## Migração Entre Ambientes
+
+### Promover flag de Dev → Staging
 ```bash
-# Usuário anônimo
-curl -X GET http://localhost:1324/api/v1/flags \
-  -H "X-App-Version: 2.0.0" \
-  -H "X-Platform: android" \
-  -H "X-Device-ID: device-123"
+# 1. Teste em dev
+# 2. Copie configuração para staging
+cp flags/flutter/dev.yaml flags/flutter/staging.yaml
 
-# Usuário autenticado
-curl -X GET http://localhost:1324/api/v1/flags \
-  -H "Authorization: Bearer SEU_TOKEN" \
-  -H "X-App-Version: 2.0.0" \
-  -H "X-Platform: ios"
+# 3. Ajuste valores se necessário
+vim flags/flutter/staging.yaml
+
+# 4. Deploy staging
+ENVIRONMENT=staging docker-compose up
 ```
+
+### Promover flag de Staging → Production
+```bash
+# 1. Teste em staging
+# 2. Ajuste valores para produção (mais conservador)
+vim flags/flutter/production.yaml
+
+# 3. Deploy production
+ENVIRONMENT=production docker-compose up
+```
+
+## Troubleshooting
+
+### Flag não está sendo aplicada
+
+1. Verifica se está no arquivo correto (`flutter/`, `user-api/`, etc)
+2. Verifica se o ambiente está correto (`dev`, `staging`, `production`)
+3. Verifica os logs do relay proxy:
+   ```bash
+   docker-compose logs go-feature-flag
+   ```
+
+### Mudança não está refletindo
+
+1. Aguarde 1-5 segundos (polling interval)
+2. Verifica se o arquivo está sendo montado corretamente:
+   ```bash
+   docker-compose exec go-feature-flag ls /goff/flags/
+   ```
+
+### Flag retorna sempre o valor padrão
+
+1. Verifica targeting - pode estar bloqueando
+2. Verifica `targetingKey` - pode estar incorreto
+3. Adiciona logs na aplicação para debug
 
 ## Documentação Oficial
 
-Para mais detalhes sobre configuração de flags, consulte:
+Para mais detalhes sobre configuração de flags:
 - [GO Feature Flag Documentation](https://gofeatureflag.org/)
 - [Targeting Rules](https://gofeatureflag.org/docs/configure_flag/flag_format)
-
+- [OpenFeature Specification](https://openfeature.dev/)

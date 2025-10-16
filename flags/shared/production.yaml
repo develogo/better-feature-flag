@@ -1,0 +1,33 @@
+# ===== SHARED FLAGS - PRODUCTION =====
+# Flags compartilhadas entre todas as aplicações
+
+maintenance-mode:
+  variations:
+    active: true
+    inactive: false
+  defaultRule:
+    variation: inactive
+
+redis-cache-enabled:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: enabled
+
+log-level:
+  variations:
+    debug: "debug"
+    info: "info"
+    warn: "warn"
+    error: "error"
+  defaultRule:
+    variation: warn
+
+rate-limit-enabled:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: enabled
+

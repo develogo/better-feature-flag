@@ -261,48 +261,33 @@ CORS configurado com headers específicos:
 
 ---
 
-## 11. **NOVO: Descoberta Automática de Flags do YAML**
+## 11. API de Avaliação de Flags Simplificada
 
 ### Antes
 ```go
-// Precisava adicionar manualmente cada flag no código
-flagDefinitions := []struct {
-    key          string
-    defaultValue interface{}
-    flagType     string
-}{
-    {"front-dark-mode", false, "bool"},
-    {"force_update_enabled", false, "bool"},
-    // ... precisava adicionar cada flag aqui
+// Código monolítico com avaliação inline
+if userID == "1" {
+    response["email"] = "user@example.com"
 }
 ```
 
 ### Depois
 ```go
-// Lê arquivos YAML e descobre flags automaticamente no startup
-func (s *FeatureFlagService) loadFlagsMetadata() error {
-    files, _ := filepath.Glob("./flags/*.yaml")
-    for _, file := range files {
-        var flags map[string]YAMLFlag
-        yaml.Unmarshal(data, &flags)
-        // Detecta tipo e valor padrão automaticamente
-        for flagKey, flagDef := range flags {
-            s.cachedFlags[flagKey] = FlagMetadata{...}
-        }
-    }
-}
-
-// Avalia todas as flags descobertas
+// Service layer com OpenFeature SDK
 func (s *FeatureFlagService) EvaluateFlags(ctx, clientCtx) {
-    for flagKey, metadata := range s.cachedFlags {
-        value, _ := s.client.BooleanValue(ctx, flagKey, ...)
-    }
+    evalCtx := s.buildEvaluationContext(clientCtx)
+    
+    flags["front-dark-mode"], _ = s.client.BooleanValue(ctx, "front-dark-mode", false, evalCtx)
+    flags["maintenance_mode"], _ = s.client.BooleanValue(ctx, "maintenance_mode", false, evalCtx)
+    // ... outras flags
 }
 ```
 
 **Como adicionar nova flag:**
+
+1. Adicione no YAML:
 ```yaml
-# Apenas adicione no flags/front.yaml
+# flags/front.yaml
 nova_feature:
   variations:
     enabled: true
@@ -311,23 +296,21 @@ nova_feature:
     variation: disabled
 ```
 
-**Reinicie o servidor e pronto! Sem modificar código Go.**
+2. Adicione no código:
+```go
+// src/internal/services/featureflag.go
+flags["nova_feature"], _ = s.client.BooleanValue(ctx, "nova_feature", false, evalCtx)
+```
 
-**Como funciona:**
-1. No startup, o serviço lê todos os `.yaml` da pasta `/flags`
-2. Detecta automaticamente cada flag e seu tipo (bool, string, number)
-3. Armazena metadados (tipo e valor padrão) em cache
-4. Na avaliação, itera sobre as flags descobertas
-5. Avalia cada uma via OpenFeature SDK com contexto do usuário
+3. Reinicie o servidor
 
 **Benefícios:**
-- **Zero manutenção de código** ao adicionar flags
-- Flags dinâmicas via YAML
-- Detecção automática de tipo (bool, string, number, object)
-- Product managers podem adicionar flags sem envolvimento de dev
-- Menos erros (sem esquecer de adicionar flag no código)
-- Suporta targeting avançado do GO Feature Flag
-- Fallback para valor padrão em caso de erro
+- API padrão OpenFeature (vendor-neutral)
+- Segue documentação oficial do GO Feature Flag
+- Código explícito e claro
+- Suporta targeting avançado
+- Fallback automático para valor padrão
+- Type-safe (bool, string, int, float, object)
 
 ---
 

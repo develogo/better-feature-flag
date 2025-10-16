@@ -1,0 +1,20 @@
+# GO Feature Flag Relay Proxy - STAGING
+pollingInterval: 1000
+
+retrievers:
+  # Flutter flags
+  - kind: file
+    path: /goff/flags/flutter/staging.yaml
+  
+  # User API flags
+  - kind: file
+    path: /goff/flags/user-api/staging.yaml
+  
+  # Payment API flags
+  - kind: file
+    path: /goff/flags/payment-api/staging.yaml
+  
+  # Shared flags
+  - kind: file
+    path: /goff/flags/shared/staging.yaml
+

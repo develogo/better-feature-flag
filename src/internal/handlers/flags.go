@@ -28,15 +28,15 @@ func (h *FlagsHandler) GetFlags(c echo.Context) error {
 	// Obtém contexto do cliente (populado pelo middleware)
 	clientCtx := middleware.GetClientContext(c)
 
-	h.logger.Info("evaluating flags",
+	h.logger.Info("evaluating all flags",
 		slog.String("targeting_key", clientCtx.GetTargetingKey()),
 		slog.String("app_version", clientCtx.AppVersion),
 		slog.String("platform", clientCtx.Platform),
 		slog.Bool("authenticated", clientCtx.IsAuthenticated()),
 	)
 
-	// Avalia flags
-	flags, err := h.service.EvaluateFlags(ctx, clientCtx)
+	// Avalia todas as flags (bulk para frontend)
+	flags, err := h.service.EvaluateAllFlags(ctx, clientCtx)
 	if err != nil {
 		h.logger.Error("failed to evaluate flags", slog.String("error", err.Error()))
 		return c.JSON(http.StatusInternalServerError, models.ErrorResponse{

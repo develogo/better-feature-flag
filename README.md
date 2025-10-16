@@ -49,17 +49,29 @@ ENVIRONMENT=development
 
 ⚠️ **Importante**: Em produção, use variáveis de ambiente seguras e não commite o arquivo `.env`.
 
+## Ambientes
+
+O projeto suporta 3 ambientes com flags isoladas:
+
+- **Development** - Para desenvolvimento local (`flags/*/dev.yaml`)
+- **Staging** - Para testes e homologação (`flags/*/staging.yaml`)
+- **Production** - Para produção (`flags/*/production.yaml`)
+
 ## Como Executar
 
 ### Opção 1: Usando Makefile (Recomendado)
 
 ```bash
-# Iniciar ambiente completo (docker + api)
-make dev
+# Development
+make dev-up      # Inicia ambiente de desenvolvimento
+make dev-logs    # Mostra logs
+make dev-down    # Para ambiente
 
-# Ou em etapas separadas:
-make docker-up  # Inicia GO Feature Flag
-make run        # Executa a API
+# Staging
+make staging-up
+
+# Production (cuidado!)
+make prod-up
 ```
 
 ### Opção 2: Manual
@@ -75,18 +87,27 @@ cp env.example .env
 # Edite o .env com suas configurações
 ```
 
-#### 3. Iniciar GO Feature Flag Relay Proxy
+#### 3. Iniciar Serviços por Ambiente
+
 ```bash
-docker-compose up -d
+# Development (padrão)
+ENVIRONMENT=dev docker-compose up -d
+
+# Staging
+ENVIRONMENT=staging docker-compose up -d
+
+# Production
+ENVIRONMENT=production docker-compose --env-file .env.production.local up -d
 ```
 
-#### 4. Executar a API
+#### 4. Executar a API (opcional, sem Docker)
+
 ```bash
 # Configurar as variáveis de ambiente primeiro
 export JWT_SECRET=minha-chave-secreta-super-segura
 export SERVER_PORT=1324
 export GOFF_ENDPOINT=http://localhost:1031
-export ENVIRONMENT=development
+export ENVIRONMENT=dev
 
 # Executar
 go run src/cmd/server/main.go
@@ -95,10 +116,13 @@ go run src/cmd/server/main.go
 ### Outros comandos úteis
 
 ```bash
-make build       # Compila o binário
-make docker-down # Para o GO Feature Flag
-make clean       # Remove arquivos compilados
-make help        # Lista todos os comandos
+make help           # Lista todos os comandos
+make dev-up         # Inicia development
+make staging-up     # Inicia staging
+make prod-up        # Inicia production
+make test-flags     # Testa se está funcionando
+make backup-flags   # Backup das flags
+make clean          # Remove tudo
 ```
 
 ## Endpoints
@@ -272,6 +296,32 @@ class FeatureFlagService {
 }
 ```
 
+## Arquitetura Multi-Aplicação
+
+Este projeto serve como **centro único** para gerenciar flags de múltiplas aplicações:
+
+```
+┌─────────────┐
+│   Flutter   │ ──HTTP──> Flag API (:1324) ──SDK──> Relay Proxy (:1031)
+└─────────────┘
+
+┌─────────────┐
+│  User API   │ ──SDK──────────────────────────> Relay Proxy (:1031)
+└─────────────┘
+
+┌─────────────┐
+│ Payment API │ ──SDK──────────────────────────> Relay Proxy (:1031)
+└─────────────┘
+```
+
+**Como funciona:**
+1. Relay Proxy lê flags de `flags/{app}/{env}.yaml`
+2. Flutter chama Flag API via HTTP (bulk evaluation)
+3. Outras APIs Go usam SDK OpenFeature direto (on-demand)
+4. Mudanças nos YAMLs são detectadas automaticamente
+
+Veja `DEPLOYMENT.md` para guia completo de deploy por ambiente.
+
 ## Desenvolvimento
 
 ### Estrutura de logs
@@ -293,17 +343,10 @@ Os logs são emitidos em formato JSON estruturado:
 
 ### Adicionando novas flags
 
-**Simples! Apenas adicione no YAML:**
+Para adicionar uma nova flag:
 
-1. Adicione a definição no arquivo YAML apropriado em `/flags` (front.yaml, api.yaml ou shared.yaml)
-2. Pronto! A flag será automaticamente descoberta e avaliada pela API
+#### 1. Adicione no arquivo YAML
 
-**Não é necessário modificar código Go.** O sistema:
-- Lê todos os arquivos `.yaml` da pasta `/flags` no startup
-- Detecta automaticamente todas as flags e seus tipos (bool, string, number)
-- Avalia cada flag usando o OpenFeature SDK com contexto do usuário
-
-Exemplo:
 ```yaml
 # flags/front.yaml
 nova_feature:
@@ -314,9 +357,25 @@ nova_feature:
     variation: disabled
 ```
 
-A flag `nova_feature` estará disponível imediatamente no response do endpoint `/api/v1/flags` após reiniciar o servidor (ou o GO Feature Flag recarregar o arquivo automaticamente a cada 1s).
+#### 2. Adicione no código Go
 
-Veja `flags/README.md` para mais exemplos e documentação completa sobre targeting e configuração de flags.
+```go
+// src/internal/services/featureflag.go
+func (s *FeatureFlagService) EvaluateFlags(ctx, clientCtx) {
+    // ... flags existentes
+    
+    // Adicione sua nova flag
+    flags["nova_feature"], _ = s.client.BooleanValue(ctx, "nova_feature", false, evalCtx)
+}
+```
+
+#### 3. Reinicie o servidor
+
+A flag estará disponível no endpoint `/api/v1/flags`.
+
+**Nota:** Mudanças no YAML são recarregadas automaticamente pelo GO Feature Flag a cada 1s, mas para adicionar uma nova flag no código, é necessário reiniciar o servidor.
+
+Veja `flags/README.md` para exemplos de targeting e configuração avançada de flags.
 
 ## Produção
 

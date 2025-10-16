@@ -1,0 +1,20 @@
+# GO Feature Flag Relay Proxy - PRODUCTION
+pollingInterval: 5000  # Polling mais lento em produção
+
+retrievers:
+  # Flutter flags
+  - kind: file
+    path: /goff/flags/flutter/production.yaml
+  
+  # User API flags
+  - kind: file
+    path: /goff/flags/user-api/production.yaml
+  
+  # Payment API flags
+  - kind: file
+    path: /goff/flags/payment-api/production.yaml
+  
+  # Shared flags
+  - kind: file
+    path: /goff/flags/shared/production.yaml
+

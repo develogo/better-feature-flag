@@ -1,0 +1,32 @@
+# ===== USER API - STAGING =====
+
+registration-enabled:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: enabled
+
+email-verification-required:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: enabled
+
+password-min-length:
+  variations:
+    short: 6
+    medium: 8
+    strong: 12
+  defaultRule:
+    variation: medium
+
+new-auth-method:
+  variations:
+    jwt: "jwt-auth"
+    oauth: "oauth-auth"
+    legacy: "legacy-auth"
+  defaultRule:
+    variation: jwt
+

@@ -17,6 +17,12 @@ go.work
 # Environment variables
 .env
 .env.local
+.env.*.local
+
+# Keep example env files but ignore actual env files with secrets
+!.env.dev
+!.env.staging
+!.env.production
 
 # IDE
 .vscode/

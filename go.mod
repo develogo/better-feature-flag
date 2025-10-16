@@ -9,7 +9,6 @@ require (
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/open-feature/go-sdk v1.9.0
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.1.26
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -35,4 +34,5 @@ require (
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

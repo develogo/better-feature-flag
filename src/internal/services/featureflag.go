@@ -5,29 +5,14 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
-	"path/filepath"
 
 	gofeatureflag "github.com/open-feature/go-sdk-contrib/providers/go-feature-flag/pkg"
 	of "github.com/open-feature/go-sdk/openfeature"
-	"gopkg.in/yaml.v3"
 )
 
 type FeatureFlagService struct {
-	client      *of.Client
-	logger      *slog.Logger
-	flagsDir    string
-	cachedFlags map[string]FlagMetadata
-}
-
-type FlagMetadata struct {
-	DefaultValue interface{}
-	Type         string // "bool", "string", "int", "float"
-}
-
-type YAMLFlag struct {
-	Variations  map[string]interface{} `yaml:"variations"`
-	DefaultRule map[string]interface{} `yaml:"defaultRule"`
+	client *of.Client
+	logger *slog.Logger
 }
 
 func NewFeatureFlagService(goffEndpoint string, logger *slog.Logger) (*FeatureFlagService, error) {
@@ -43,123 +28,72 @@ func NewFeatureFlagService(goffEndpoint string, logger *slog.Logger) (*FeatureFl
 	of.SetProvider(provider)
 	client := of.NewClient("better-feature-flag")
 
-	service := &FeatureFlagService{
-		client:      client,
-		logger:      logger,
-		flagsDir:    "./flags",
-		cachedFlags: make(map[string]FlagMetadata),
-	}
-
-	// Carrega metadados das flags dos arquivos YAML
-	if err := service.loadFlagsMetadata(); err != nil {
-		logger.Warn("failed to load flags metadata", slog.String("error", err.Error()))
-	}
-
-	return service, nil
+	return &FeatureFlagService{
+		client: client,
+		logger: logger,
+	}, nil
 }
 
-func (s *FeatureFlagService) loadFlagsMetadata() error {
-	files, err := filepath.Glob(filepath.Join(s.flagsDir, "*.yaml"))
-	if err != nil {
-		return fmt.Errorf("failed to list yaml files: %w", err)
-	}
-
-	for _, file := range files {
-		data, err := os.ReadFile(file)
-		if err != nil {
-			s.logger.Warn("failed to read yaml file", slog.String("file", file), slog.String("error", err.Error()))
-			continue
-		}
-
-		var flags map[string]YAMLFlag
-		if err := yaml.Unmarshal(data, &flags); err != nil {
-			s.logger.Warn("failed to parse yaml file", slog.String("file", file), slog.String("error", err.Error()))
-			continue
-		}
-
-		for flagKey, flagDef := range flags {
-			// Determina o tipo e valor padrão da flag
-			if len(flagDef.Variations) > 0 {
-				// Pega o primeiro valor para determinar o tipo
-				for _, value := range flagDef.Variations {
-					metadata := FlagMetadata{
-						DefaultValue: value,
-						Type:         inferType(value),
-					}
-					s.cachedFlags[flagKey] = metadata
-					break
-				}
-			}
-		}
-	}
-
-	s.logger.Info("loaded flags metadata", slog.Int("count", len(s.cachedFlags)))
-	return nil
-}
-
-func inferType(value interface{}) string {
-	switch value.(type) {
-	case bool:
-		return "bool"
-	case int, int64, float64:
-		return "number"
-	case string:
-		return "string"
-	default:
-		return "unknown"
-	}
-}
-
-func (s *FeatureFlagService) EvaluateFlags(ctx context.Context, clientCtx *models.ClientContext) (map[string]interface{}, error) {
+// EvaluateAllFlags retorna todas as flags para o frontend (bulk)
+func (s *FeatureFlagService) EvaluateAllFlags(ctx context.Context, clientCtx *models.ClientContext) (map[string]interface{}, error) {
 	evalCtx := s.buildEvaluationContext(clientCtx)
 	flags := make(map[string]interface{})
 
-	// Avalia todas as flags descobertas dos arquivos YAML
-	for flagKey, metadata := range s.cachedFlags {
-		var value interface{}
-		var err error
+	// Frontend flags
+	flags["front-dark-mode"], _ = s.client.BooleanValue(ctx, "front-dark-mode", false, evalCtx)
+	flags["maintenance_mode"], _ = s.client.BooleanValue(ctx, "maintenance_mode", false, evalCtx)
+	flags["maintenance_title"], _ = s.client.StringValue(ctx, "maintenance_title", "Estamos em manutenção", evalCtx)
+	flags["maintenance_message"], _ = s.client.StringValue(ctx, "maintenance_message", "Mensagem da manutenção", evalCtx)
+	flags["feedback_enabled"], _ = s.client.BooleanValue(ctx, "feedback_enabled", true, evalCtx)
+	flags["force_update_enabled"], _ = s.client.BooleanValue(ctx, "force_update_enabled", false, evalCtx)
+	flags["minimum_app_version"], _ = s.client.StringValue(ctx, "minimum_app_version", "1.0.0", evalCtx)
+	flags["update_title"], _ = s.client.StringValue(ctx, "update_title", "Atualização Necessária", evalCtx)
+	flags["update_message"], _ = s.client.StringValue(ctx, "update_message", "Atualize para continuar", evalCtx)
+	flags["new_dashboard"], _ = s.client.BooleanValue(ctx, "new_dashboard", false, evalCtx)
 
-		switch metadata.Type {
-		case "bool":
-			defaultBool, _ := metadata.DefaultValue.(bool)
-			value, err = s.client.BooleanValue(ctx, flagKey, defaultBool, evalCtx)
-		case "string":
-			defaultStr, _ := metadata.DefaultValue.(string)
-			value, err = s.client.StringValue(ctx, flagKey, defaultStr, evalCtx)
-		case "number":
-			switch v := metadata.DefaultValue.(type) {
-			case int:
-				value, err = s.client.IntValue(ctx, flagKey, int64(v), evalCtx)
-			case int64:
-				value, err = s.client.IntValue(ctx, flagKey, v, evalCtx)
-			case float64:
-				value, err = s.client.FloatValue(ctx, flagKey, v, evalCtx)
-			default:
-				value, err = s.client.FloatValue(ctx, flagKey, 0, evalCtx)
-			}
-		default:
-			// Tenta como object/JSON
-			value, err = s.client.ObjectValue(ctx, flagKey, map[string]interface{}{}, evalCtx)
-		}
-
-		if err != nil {
-			s.logger.Warn("failed to evaluate flag",
-				slog.String("flag", flagKey),
-				slog.String("error", err.Error()),
-			)
-			value = metadata.DefaultValue
-		}
-
-		flags[flagKey] = value
-
-		s.logger.Debug("flag evaluated",
-			slog.String("flag", flagKey),
-			slog.Any("value", value),
-			slog.String("targeting_key", clientCtx.GetTargetingKey()),
-		)
-	}
+	s.logger.Info("all flags evaluated",
+		slog.Int("count", len(flags)),
+		slog.String("targeting_key", clientCtx.GetTargetingKey()),
+	)
 
 	return flags, nil
+}
+
+// EvaluateFlag retorna uma flag específica (para uso interno do backend)
+func (s *FeatureFlagService) EvaluateFlag(ctx context.Context, flagKey string, defaultValue interface{}, clientCtx *models.ClientContext) (interface{}, error) {
+	evalCtx := s.buildEvaluationContext(clientCtx)
+
+	var value interface{}
+	var err error
+
+	switch defaultValue.(type) {
+	case bool:
+		value, err = s.client.BooleanValue(ctx, flagKey, defaultValue.(bool), evalCtx)
+	case string:
+		value, err = s.client.StringValue(ctx, flagKey, defaultValue.(string), evalCtx)
+	case int64:
+		value, err = s.client.IntValue(ctx, flagKey, defaultValue.(int64), evalCtx)
+	case float64:
+		value, err = s.client.FloatValue(ctx, flagKey, defaultValue.(float64), evalCtx)
+	default:
+		return defaultValue, fmt.Errorf("unsupported flag type")
+	}
+
+	if err != nil {
+		s.logger.Warn("failed to evaluate flag",
+			slog.String("flag", flagKey),
+			slog.String("error", err.Error()),
+		)
+		return defaultValue, err
+	}
+
+	s.logger.Debug("flag evaluated",
+		slog.String("flag", flagKey),
+		slog.Any("value", value),
+		slog.String("targeting_key", clientCtx.GetTargetingKey()),
+	)
+
+	return value, nil
 }
 
 func (s *FeatureFlagService) buildEvaluationContext(clientCtx *models.ClientContext) of.EvaluationContext {

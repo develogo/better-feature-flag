@@ -1,31 +1,29 @@
-.PHONY: help run build test docker-up docker-down clean
+.PHONY: help up down run logs clean
 
-help: ## Mostra esta mensagem de ajuda
-	@echo "Comandos disponíveis:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+help: ## Mostra comandos disponíveis
+	@echo "Comandos:"
+	@echo "  make up     - Inicia relay proxy (Docker)"
+	@echo "  make down   - Para relay proxy"
+	@echo "  make run    - Roda a API localmente"
+	@echo "  make logs   - Mostra logs"
+	@echo "  make clean  - Remove tudo"
 
-run: ## Executa a aplicação
-	@go run src/cmd/server/main.go
-
-build: ## Compila a aplicação
-	@go build -o bin/server src/cmd/server/main.go
-
-docker-up: ## Inicia o GO Feature Flag relay proxy
+up: ## Inicia relay proxy
 	@docker-compose up -d
+	@echo "✅ Relay proxy rodando em http://localhost:1031"
 
-docker-down: ## Para o GO Feature Flag relay proxy
+down: ## Para Docker
 	@docker-compose down
 
-test: ## Executa os testes
-	@go test -v ./...
+run: ## Roda API localmente
+	@export JWT_SECRET=dev-secret && \
+	 export GOFF_ENDPOINT=http://localhost:1031 && \
+	 export ENVIRONMENT=dev && \
+	 go run src/cmd/server/main.go
 
-clean: ## Remove arquivos compilados
+logs: ## Mostra logs
+	@docker-compose logs -f
+
+clean: ## Remove tudo
+	@docker-compose down -v
 	@rm -rf bin/
-	@go clean
-
-deps: ## Baixa as dependências
-	@go mod download
-	@go mod tidy
-
-dev: docker-up run ## Inicia o ambiente de desenvolvimento completo
-

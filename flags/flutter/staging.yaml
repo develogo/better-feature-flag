@@ -1,9 +1,11 @@
+# ===== FLUTTER APP - STAGING =====
+
 front-dark-mode:
   variations:
     enabled: true
     disabled: false
   defaultRule:
-    variation: disabled
+    variation: enabled
 
 maintenance_mode:
   variations:
@@ -30,9 +32,6 @@ feedback_enabled:
   variations:
     enabled: true
     disabled: false
-  targeting:
-    - query: targetingKey eq "14117d52-7e6d-4f48-95ed-ce024103d6eb"
-      variation: disabled
   defaultRule:
     variation: enabled
 
@@ -63,24 +62,10 @@ update_message:
   defaultRule:
     variation: default
 
-# Exemplo de flag com targeting por versão do app
 new_dashboard:
   variations:
     enabled: true
     disabled: false
-  targeting:
-    - query: app_version gte "2.0.0"
-      variation: enabled
   defaultRule:
     variation: disabled
 
-min_int_example:
-  variations:
-    one: 1
-    two: 2
-  defaultRule:
-    variation: two
-
-
-    
-  
