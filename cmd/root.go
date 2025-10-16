@@ -1,0 +1,21 @@
+package cmd
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+)
+
+var rootCmd = &cobra.Command{
+	Use:   "better-feature-flag",
+	Short: "A feature flag proxy server",
+	Long:  `A feature flag proxy server that integrates with GO Feature Flag and Keycloak for authentication.`,
+}
+
+func Execute() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}

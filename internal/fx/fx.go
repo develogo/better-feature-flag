@@ -1,9 +1,9 @@
 package fx
 
 import (
-	"better-feature-flag/src/internal/config"
-	"better-feature-flag/src/internal/handlers"
-	"better-feature-flag/src/internal/middleware"
+	"better-feature-flag/internal/config"
+	"better-feature-flag/internal/handlers"
+	"better-feature-flag/internal/middleware"
 	"context"
 	"log/slog"
 	"os"

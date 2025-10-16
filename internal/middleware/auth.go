@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"better-feature-flag/src/internal/models"
-	"better-feature-flag/src/internal/services"
+	"better-feature-flag/internal/models"
+	"better-feature-flag/internal/services"
 	"strings"
 
 	"github.com/labstack/echo/v4"

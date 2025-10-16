@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"better-feature-flag/src/internal/middleware"
-	"better-feature-flag/src/internal/models"
-	"better-feature-flag/src/internal/services"
+	"better-feature-flag/internal/middleware"
+	"better-feature-flag/internal/models"
+	"better-feature-flag/internal/services"
 	"log/slog"
 	"net/http"
 
