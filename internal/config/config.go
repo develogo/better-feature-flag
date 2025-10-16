@@ -3,29 +3,61 @@ package config
 import (
 	"fmt"
 	"os"
+
+	"github.com/spf13/viper"
 )
 
 type Config struct {
-	JWTSecret            string
-	ServerPort           string
-	GoffEndpoint         string
-	Environment          string
-	KeycloakURL          string
-	KeycloakRealm        string
-	KeycloakClientID     string
-	KeycloakClientSecret string
+	App      AppConfig      `mapstructure:"app"`
+	Goff     GoffConfig     `mapstructure:"goff"`
+	Keycloak KeycloakConfig `mapstructure:"keycloak"`
+	JWT      JWTConfig      `mapstructure:"jwt"`
+}
+
+type AppConfig struct {
+	Version  string `mapstructure:"version"`
+	Port     string `mapstructure:"port"`
+	Mode     string `mapstructure:"mode"`
+	LogLevel string `mapstructure:"log_level"`
+}
+
+type GoffConfig struct {
+	Endpoint    string `mapstructure:"endpoint"`
+	Environment string `mapstructure:"environment"`
+}
+
+type KeycloakConfig struct {
+	URL          string `mapstructure:"url"`
+	Realm        string `mapstructure:"realm"`
+	ClientID     string `mapstructure:"client_id"`
+	ClientSecret string `mapstructure:"client_secret"`
+}
+
+type JWTConfig struct {
+	Secret string `mapstructure:"secret"`
 }
 
 func Load() (*Config, error) {
-	config := &Config{
-		JWTSecret:            getEnv("JWT_SECRET", ""),
-		ServerPort:           getEnv("SERVER_PORT", "1324"),
-		GoffEndpoint:         getEnv("GOFF_ENDPOINT", "http://localhost:1031"),
-		Environment:          getEnv("ENVIRONMENT", "development"),
-		KeycloakURL:          getEnv("KEYCLOAK_URL", ""),
-		KeycloakRealm:        getEnv("KEYCLOAK_REALM", ""),
-		KeycloakClientID:     getEnv("KEYCLOAK_CLIENT_ID", ""),
-		KeycloakClientSecret: getEnv("KEYCLOAK_CLIENT_SECRET", ""),
+	appEnv := os.Getenv("APP_ENV")
+	if appEnv == "" {
+		appEnv = "local"
+	}
+
+	viper.SetConfigName(appEnv)
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("./config")
+	viper.AddConfigPath("../config")
+	viper.AddConfigPath("../../config")
+
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err != nil {
+		return nil, fmt.Errorf("failed to read config file: %w", err)
+	}
+
+	config := &Config{}
+	if err := viper.Unmarshal(config); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
 	if err := config.Validate(); err != nil {
@@ -36,36 +68,33 @@ func Load() (*Config, error) {
 }
 
 func (c *Config) Validate() error {
-	if c.ServerPort == "" {
-		return fmt.Errorf("SERVER_PORT cannot be empty")
+	if c.App.Port == "" {
+		return fmt.Errorf("app.port cannot be empty")
 	}
 
-	if c.GoffEndpoint == "" {
-		return fmt.Errorf("GOFF_ENDPOINT cannot be empty")
+	if c.Goff.Endpoint == "" {
+		return fmt.Errorf("goff.endpoint cannot be empty")
 	}
 
-	if c.KeycloakURL == "" {
-		return fmt.Errorf("KEYCLOAK_URL is required")
+	if c.Keycloak.URL == "" {
+		return fmt.Errorf("keycloak.url is required")
 	}
 
-	if c.KeycloakRealm == "" {
-		return fmt.Errorf("KEYCLOAK_REALM is required")
+	if c.Keycloak.Realm == "" {
+		return fmt.Errorf("keycloak.realm is required")
 	}
 
-	if c.KeycloakClientID == "" {
-		return fmt.Errorf("KEYCLOAK_CLIENT_ID is required")
+	if c.Keycloak.ClientID == "" {
+		return fmt.Errorf("keycloak.client_id is required")
 	}
 
-	if c.KeycloakClientSecret == "" {
-		return fmt.Errorf("KEYCLOAK_CLIENT_SECRET is required")
+	if c.Keycloak.ClientSecret == "" {
+		return fmt.Errorf("keycloak.client_secret is required")
+	}
+
+	if c.JWT.Secret == "" {
+		return fmt.Errorf("jwt.secret is required")
 	}
 
 	return nil
-}
-
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
 }

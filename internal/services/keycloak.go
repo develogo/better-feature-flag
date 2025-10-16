@@ -34,13 +34,13 @@ type JWTClaims struct {
 }
 
 func NewKeycloakService(cfg *config.Config, logger *slog.Logger) *KeycloakService {
-	client := gocloak.NewClient(cfg.KeycloakURL)
+	client := gocloak.NewClient(cfg.Keycloak.URL)
 
 	return &KeycloakService{
 		client:       client,
-		realm:        cfg.KeycloakRealm,
-		clientID:     cfg.KeycloakClientID,
-		clientSecret: cfg.KeycloakClientSecret,
+		realm:        cfg.Keycloak.Realm,
+		clientID:     cfg.Keycloak.ClientID,
+		clientSecret: cfg.Keycloak.ClientSecret,
 		logger:       logger,
 	}
 }

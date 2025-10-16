@@ -53,9 +53,10 @@ func RegisterRoutes(p RouteParams) {
 	// Log startup
 	p.Logger.Info("Starting Better Feature Flag")
 	p.Logger.Info("configuration loaded",
-		slog.String("environment", p.Config.Environment),
-		slog.String("goff_endpoint", p.Config.GoffEndpoint),
-		slog.String("port", p.Config.ServerPort),
+		slog.String("environment", p.Config.Goff.Environment),
+		slog.String("goff_endpoint", p.Config.Goff.Endpoint),
+		slog.String("port", p.Config.App.Port),
+		slog.String("mode", p.Config.App.Mode),
 	)
 
 	// Middlewares globais
@@ -75,8 +76,8 @@ func RegisterRoutes(p RouteParams) {
 	p.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			go func() {
-				p.Logger.Info("server started", slog.String("port", p.Config.ServerPort))
-				if err := p.Echo.Start(":" + p.Config.ServerPort); err != nil {
+				p.Logger.Info("server started", slog.String("port", p.Config.App.Port))
+				if err := p.Echo.Start(":" + p.Config.App.Port); err != nil {
 					p.Logger.Error("server error", slog.String("error", err.Error()))
 				}
 			}()

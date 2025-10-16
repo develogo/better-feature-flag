@@ -16,9 +16,7 @@ down: ## Para Docker
 	@docker-compose down
 
 run: ## Roda API localmente
-	@export JWT_SECRET=dev-secret && \
-	 export GOFF_ENDPOINT=http://localhost:1031 && \
-	 export ENVIRONMENT=dev && \
+	@export APP_ENV=local && \
 	 go run main.go server
 
 logs: ## Mostra logs

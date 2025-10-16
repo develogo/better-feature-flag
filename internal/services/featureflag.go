@@ -19,7 +19,7 @@ type FeatureFlagService struct {
 func NewFeatureFlagService(cfg *config.Config, logger *slog.Logger) (*FeatureFlagService, error) {
 	provider, err := gofeatureflag.NewProvider(
 		gofeatureflag.ProviderOptions{
-			Endpoint:     cfg.GoffEndpoint,
+			Endpoint:     cfg.Goff.Endpoint,
 			DisableCache: true,
 		})
 	if err != nil {
