@@ -1,6 +1,7 @@
 package services
 
 import (
+	"better-feature-flag/src/internal/config"
 	"better-feature-flag/src/internal/models"
 	"context"
 	"fmt"
@@ -15,10 +16,10 @@ type FeatureFlagService struct {
 	logger *slog.Logger
 }
 
-func NewFeatureFlagService(goffEndpoint string, logger *slog.Logger) (*FeatureFlagService, error) {
+func NewFeatureFlagService(cfg *config.Config, logger *slog.Logger) (*FeatureFlagService, error) {
 	provider, err := gofeatureflag.NewProvider(
 		gofeatureflag.ProviderOptions{
-			Endpoint:     goffEndpoint,
+			Endpoint:     cfg.GoffEndpoint,
 			DisableCache: true,
 		})
 	if err != nil {

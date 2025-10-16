@@ -1,6 +1,7 @@
 package services
 
 import (
+	"better-feature-flag/src/internal/config"
 	"context"
 	"fmt"
 	"log/slog"
@@ -32,14 +33,14 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 }
 
-func NewKeycloakService(keycloakURL, realm, clientID, clientSecret string, logger *slog.Logger) *KeycloakService {
-	client := gocloak.NewClient(keycloakURL)
+func NewKeycloakService(cfg *config.Config, logger *slog.Logger) *KeycloakService {
+	client := gocloak.NewClient(cfg.KeycloakURL)
 
 	return &KeycloakService{
 		client:       client,
-		realm:        realm,
-		clientID:     clientID,
-		clientSecret: clientSecret,
+		realm:        cfg.KeycloakRealm,
+		clientID:     cfg.KeycloakClientID,
+		clientSecret: cfg.KeycloakClientSecret,
 		logger:       logger,
 	}
 }
