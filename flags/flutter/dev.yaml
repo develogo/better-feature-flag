@@ -65,11 +65,27 @@ update_message:
   defaultRule:
     variation: default
 
-# Exemplo de flag com targeting por versão do app
+# Exemplo de targeting por plataforma
+android_only_feature:
+  variations:
+    enabled: true
+    disabled: false
+  targeting:
+    - query: platform eq "android"
+      variation: enabled
+  defaultRule:
+    variation: disabled
+
+# Exemplo de targeting por versão E plataforma
 new_dashboard:
   variations:
     enabled: true
     disabled: false
+  targeting:
+    - query: platform eq "ios" AND app_version >= "2.0.0"
+      variation: enabled
+    - query: platform eq "android" AND app_version >= "1.5.0"
+      variation: enabled
   defaultRule:
     variation: disabled
 

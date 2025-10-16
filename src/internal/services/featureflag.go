@@ -59,43 +59,6 @@ func (s *FeatureFlagService) EvaluateAllFlags(ctx context.Context, clientCtx *mo
 	return flags, nil
 }
 
-// EvaluateFlag retorna uma flag específica (para uso interno do backend)
-func (s *FeatureFlagService) EvaluateFlag(ctx context.Context, flagKey string, defaultValue interface{}, clientCtx *models.ClientContext) (interface{}, error) {
-	evalCtx := s.buildEvaluationContext(clientCtx)
-
-	var value interface{}
-	var err error
-
-	switch defaultValue.(type) {
-	case bool:
-		value, err = s.client.BooleanValue(ctx, flagKey, defaultValue.(bool), evalCtx)
-	case string:
-		value, err = s.client.StringValue(ctx, flagKey, defaultValue.(string), evalCtx)
-	case int64:
-		value, err = s.client.IntValue(ctx, flagKey, defaultValue.(int64), evalCtx)
-	case float64:
-		value, err = s.client.FloatValue(ctx, flagKey, defaultValue.(float64), evalCtx)
-	default:
-		return defaultValue, fmt.Errorf("unsupported flag type")
-	}
-
-	if err != nil {
-		s.logger.Warn("failed to evaluate flag",
-			slog.String("flag", flagKey),
-			slog.String("error", err.Error()),
-		)
-		return defaultValue, err
-	}
-
-	s.logger.Debug("flag evaluated",
-		slog.String("flag", flagKey),
-		slog.Any("value", value),
-		slog.String("targeting_key", clientCtx.GetTargetingKey()),
-	)
-
-	return value, nil
-}
-
 func (s *FeatureFlagService) buildEvaluationContext(clientCtx *models.ClientContext) of.EvaluationContext {
 	attributes := map[string]interface{}{
 		"app_version": clientCtx.AppVersion,

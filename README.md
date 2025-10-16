@@ -206,10 +206,18 @@ curl -X GET http://localhost:1324/api/v1/flags \
     "force_update_enabled": false,
     "minimum_app_version": "1.0.0",
     "update_title": "Atualização Necessária",
-    "update_message": "Atualize para continuar"
+    "update_message": "Atualize para continuar",
+    "new_dashboard": true
   }
 }
 ```
+
+**Tipos de valores suportados:**
+- `boolean` - true/false
+- `string` - texto
+- `number` - inteiro ou decimal
+- `object` - JSON object
+- `array` - JSON array
 
 ## Configuração das Feature Flags
 
@@ -278,7 +286,6 @@ class FeatureFlagService {
     if (authToken != null) {
       headers['Authorization'] = 'Bearer $authToken';
     } else {
-      // Se não autenticado, enviar device ID
       headers['X-Device-ID'] = await getDeviceId();
     }
     
@@ -288,11 +295,28 @@ class FeatureFlagService {
     );
     
     if (response.statusCode == 200) {
-      return json.decode(response.body)['flags'];
+      final data = json.decode(response.body);
+      return data['flags'] as Map<String, dynamic>;
     } else {
       throw Exception('Failed to load flags');
     }
   }
+}
+
+// Uso no app
+final flags = await FeatureFlagService().getFlags();
+
+if (flags['maintenance_mode'] == true) {
+  showMaintenanceScreen();
+}
+
+if (flags['new_dashboard'] == true) {
+  Navigator.push(context, NewDashboardRoute());
+}
+
+final minVersion = flags['minimum_app_version'] as String;
+if (needsUpdate(currentVersion, minVersion)) {
+  showUpdateDialog();
 }
 ```
 
