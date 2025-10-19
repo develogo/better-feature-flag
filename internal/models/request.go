@@ -5,13 +5,17 @@ type ClientContext struct {
 	Email           string
 	Username        string
 	DeviceID        string
-	Architecture    string // Sec-CH-UA-Arch
-	DeviceModel     string // Sec-CH-UA-Model
-	Platform        string // Sec-CH-UA-Platform
-	PlatformVersion string // Sec-CH-UA-Platform-Version
-	UserAgent       string // Sec-CH-UA
-	AppVersion      string // Sec-CH-UA-Full-Version
-	IsMobile        string // Sec-CH-UA-Mobile
+	Platform        string
+	PlatformVersion string
+	DeviceModel     string
+	Architecture    string
+	DeviceBrand     string
+	Mobile          string
+	Device          string
+	AppName         string
+	AppVersion      string
+	PackageName     string
+	BuildNumber     string
 }
 
 func (c *ClientContext) GetTargetingKey() string {

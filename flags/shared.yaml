@@ -1,9 +1,0 @@
-# ===== FLAGS COMPARTILHADAS =====
-
-# Maintenance mode (afeta front e API)
-maintenance-mode:
-  variations:
-    active: true
-    inactive: false
-  defaultRule:
-    variation: inactive

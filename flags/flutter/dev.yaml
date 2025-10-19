@@ -1,5 +1,4 @@
 # ===== FLUTTER APP - DEVELOPMENT =====
-
 dark_mode:
   variations:
     enabled: true
@@ -29,7 +28,7 @@ force_update_enabled:
     enabled: true
     disabled: false
   defaultRule:
-    variation: disabled
+    variation: enabled
 
 minimum_app_version:
   variations:

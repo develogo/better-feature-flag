@@ -37,15 +37,17 @@ func (m *AuthMiddleware) OptionalJWT() echo.MiddlewareFunc {
 
 			// Extrai headers do Flutter
 			clientCtx.DeviceID = c.Request().Header.Get("Device-ID")
-
-			// Extrai User-Agent Client Hints
-			clientCtx.Architecture = c.Request().Header.Get("Sec-CH-UA-Arch")
-			clientCtx.DeviceModel = c.Request().Header.Get("Sec-CH-UA-Model")
-			clientCtx.Platform = c.Request().Header.Get("Sec-CH-UA-Platform")
-			clientCtx.PlatformVersion = c.Request().Header.Get("Sec-CH-UA-Platform-Version")
-			clientCtx.AppVersion = c.Request().Header.Get("Sec-CH-UA-Full-Version")
-			clientCtx.IsMobile = c.Request().Header.Get("Sec-CH-UA-Mobile")
-			clientCtx.UserAgent = c.Request().Header.Get("Sec-CH-UA")
+			clientCtx.Platform = c.Request().Header.Get("Platform")
+			clientCtx.PlatformVersion = c.Request().Header.Get("Platform-Version")
+			clientCtx.DeviceModel = c.Request().Header.Get("Device-Model")
+			clientCtx.Architecture = c.Request().Header.Get("Device-Architecture")
+			clientCtx.DeviceBrand = c.Request().Header.Get("Device-Brand")
+			clientCtx.Mobile = c.Request().Header.Get("Mobile")
+			clientCtx.Device = c.Request().Header.Get("Device")
+			clientCtx.AppName = c.Request().Header.Get("App-Name")
+			clientCtx.AppVersion = c.Request().Header.Get("App-Version")
+			clientCtx.PackageName = c.Request().Header.Get("Package-Name")
+			clientCtx.BuildNumber = c.Request().Header.Get("Build-Number")
 
 			// Armazena no contexto do Echo
 			c.Set("client_context", clientCtx)

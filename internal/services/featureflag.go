@@ -40,7 +40,7 @@ func (s *FeatureFlagService) EvaluateAllFlags(ctx context.Context, clientCtx *mo
 	flags := make(map[string]interface{})
 
 	// Frontend flags
-	flags["dark-mode"], _ = s.client.BooleanValue(ctx, "dark-mode", false, evalCtx)
+	flags["dark_mode"], _ = s.client.BooleanValue(ctx, "dark_mode", false, evalCtx)
 	flags["maintenance_mode"], _ = s.client.BooleanValue(ctx, "maintenance_mode", false, evalCtx)
 	flags["feedback_enabled"], _ = s.client.BooleanValue(ctx, "feedback_enabled", true, evalCtx)
 	flags["force_update_enabled"], _ = s.client.BooleanValue(ctx, "force_update_enabled", false, evalCtx)
