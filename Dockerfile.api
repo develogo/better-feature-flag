@@ -15,7 +15,5 @@ WORKDIR /app
 COPY --from=builder /app/server /app/server
 COPY config /app/config
 
-EXPOSE 1324
-
-ENTRYPOINT ["/app/server"]
+ENTRYPOINT ["/app/server", "server"]
 
