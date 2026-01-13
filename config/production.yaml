@@ -1,6 +1,6 @@
 app:
   version: "1.0.0"
-  port: "1324"
+  port: "80"
   mode: "production"
   log_level: "info"
 
@@ -9,10 +9,10 @@ goff:
   environment: "production"
 
 keycloak:
-  url: ""
-  realm: ""
-  client_id: ""
-  client_secret: ""
+  url: "https://auth.bettercity.app/"
+  realm: "bettercity"
+  client_id: "better-feature-flag"
+  client_secret: env://KEYCLOAK_CLIENT_SECRET
 
 jwt:
   secret: ""
