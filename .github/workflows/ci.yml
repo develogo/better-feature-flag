@@ -8,15 +8,30 @@ on:
 
 jobs:
   pipeline:
-    uses: develogo/git-actions/.github/workflows/build_push_and_update_stacks.yml@main
-    with:
-      image_name: bettercity-flags
-      image_repo: develogo/bettercity-flags
-      stacks_repo: develogo/stacks
-      stacks_compose_path: stacks/bettercity-feature-flag/docker-compose.yml
-      dockerfile_path: Dockerfile
-      context: .
-      platforms: linux/amd64
-    secrets:
-      STACKS_REPO_TOKEN: ${{ secrets.STACKS_REPO_TOKEN }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout app repo
+        uses: actions/checkout@v4
+
+      - name: Checkout git-actions
+        uses: actions/checkout@v4
+        with:
+          repository: develogo/git-actions
+          token: ${{ secrets.STACKS_REPO_TOKEN }}
+          path: git-actions
+
+      - name: Build, push and open PR in stacks
+        uses: ./git-actions/actions/build_push_and_update_stacks
+        with:
+          image_name: bettercity-flags
+          image_repo: develogo/bettercity-flags
+          stacks_repo: develogo/stacks
+          stacks_compose_path: stacks/bettercity-feature-flag/docker-compose.yml
+          stacks_repo_token: ${{ secrets.STACKS_REPO_TOKEN }}
+          dockerfile_path: Dockerfile
+          context: .
+          platforms: linux/amd64
 
