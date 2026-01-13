@@ -5,7 +5,7 @@ app:
   log_level: "info"
 
 goff:
-  endpoint: "http://localhost:1031"
+  endpoint: "http://relay:1031"
   environment: "production"
 
 keycloak:
