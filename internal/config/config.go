@@ -11,19 +11,14 @@ type Config struct {
 	App      AppConfig      `mapstructure:"app"`
 	Goff     GoffConfig     `mapstructure:"goff"`
 	Keycloak KeycloakConfig `mapstructure:"keycloak"`
-	JWT      JWTConfig      `mapstructure:"jwt"`
 }
 
 type AppConfig struct {
-	Version  string `mapstructure:"version"`
-	Port     string `mapstructure:"port"`
-	Mode     string `mapstructure:"mode"`
-	LogLevel string `mapstructure:"log_level"`
+	Port string `mapstructure:"port"`
 }
 
 type GoffConfig struct {
-	Endpoint    string `mapstructure:"endpoint"`
-	Environment string `mapstructure:"environment"`
+	Endpoint string `mapstructure:"endpoint"`
 }
 
 type KeycloakConfig struct {
@@ -31,10 +26,6 @@ type KeycloakConfig struct {
 	Realm        string `mapstructure:"realm"`
 	ClientID     string `mapstructure:"client_id"`
 	ClientSecret string `mapstructure:"client_secret"`
-}
-
-type JWTConfig struct {
-	Secret string `mapstructure:"secret"`
 }
 
 func Load() (*Config, error) {
@@ -90,10 +81,6 @@ func (c *Config) Validate() error {
 
 	if c.Keycloak.ClientSecret == "" {
 		return fmt.Errorf("keycloak.client_secret is required")
-	}
-
-	if c.JWT.Secret == "" {
-		return fmt.Errorf("jwt.secret is required")
 	}
 
 	return nil

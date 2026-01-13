@@ -53,10 +53,8 @@ func RegisterRoutes(p RouteParams) {
 	// Log startup
 	p.Logger.Info("Starting Better Feature Flag")
 	p.Logger.Info("configuration loaded",
-		slog.String("environment", p.Config.Goff.Environment),
 		slog.String("goff_endpoint", p.Config.Goff.Endpoint),
 		slog.String("port", p.Config.App.Port),
-		slog.String("mode", p.Config.App.Mode),
 	)
 
 	// Middlewares globais

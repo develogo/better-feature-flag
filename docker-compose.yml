@@ -7,3 +7,10 @@ services:
       - ./flags:/goff/flags
       - ./goff-proxy-dev.yaml:/goff/goff-proxy.yaml
     restart: unless-stopped
+    networks:
+      - bettercity_local
+
+networks:
+  bettercity_local:
+    external: true
+    name: bettercity_local
