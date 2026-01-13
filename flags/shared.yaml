@@ -1,4 +1,4 @@
-# ===== SHARED FLAGS - DEVELOPMENT =====
+# ===== SHARED FLAGS =====
 # Flags compartilhadas entre todas as aplicações
 
 maintenance-mode:
@@ -22,12 +22,12 @@ log-level:
     warn: "warn"
     error: "error"
   defaultRule:
-    variation: debug
+    variation: warn
 
 rate-limit-enabled:
   variations:
     enabled: true
     disabled: false
   defaultRule:
-    variation: disabled
+    variation: enabled
 

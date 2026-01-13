@@ -1,5 +1,5 @@
-# ===== FLUTTER APP - DEVELOPMENT =====
-dark_mode:
+# ===== FLUTTER APP =====
+dark-mode:
   variations:
     enabled: true
     disabled: false
@@ -17,9 +17,6 @@ feedback_enabled:
   variations:
     enabled: true
     disabled: false
-  targeting:
-    - query: targetingKey eq "14117d52-7e6d-4f48-95ed-ce024103d6eb"
-      variation: disabled
   defaultRule:
     variation: enabled
 
@@ -28,7 +25,7 @@ force_update_enabled:
     enabled: true
     disabled: false
   defaultRule:
-    variation: enabled
+    variation: disabled
 
 minimum_app_version:
   variations:

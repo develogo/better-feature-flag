@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  pipeline:
+    uses: develogo/git-actions/.github/workflows/build_push_and_update_stacks.yml@main
+    with:
+      image_name: bettercity-flags
+      image_repo: develogo/bettercity-flags
+      stacks_repo: develogo/stacks
+      stacks_compose_path: stacks/bettercity-feature-flag/docker-compose.yml
+      dockerfile_path: Dockerfile
+      context: .
+      platforms: linux/amd64
+    secrets:
+      STACKS_REPO_TOKEN: ${{ secrets.STACKS_REPO_TOKEN }}
+

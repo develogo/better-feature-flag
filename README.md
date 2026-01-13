@@ -49,29 +49,14 @@ ENVIRONMENT=development
 
 ⚠️ **Importante**: Em produção, use variáveis de ambiente seguras e não commite o arquivo `.env`.
 
-## Ambientes
-
-O projeto suporta 3 ambientes com flags isoladas:
-
-- **Development** - Para desenvolvimento local (`flags/*/dev.yaml`)
-- **Staging** - Para testes e homologação (`flags/*/staging.yaml`)
-- **Production** - Para produção (`flags/*/production.yaml`)
-
 ## Como Executar
 
 ### Opção 1: Usando Makefile (Recomendado)
 
 ```bash
-# Development
-make dev-up      # Inicia ambiente de desenvolvimento
-make dev-logs    # Mostra logs
-make dev-down    # Para ambiente
-
-# Staging
-make staging-up
-
-# Production (cuidado!)
-make prod-up
+make up
+make logs
+make down
 ```
 
 ### Opção 2: Manual
@@ -87,17 +72,10 @@ cp env.example .env
 # Edite o .env com suas configurações
 ```
 
-#### 3. Iniciar Serviços por Ambiente
+#### 3. Iniciar Serviços
 
 ```bash
-# Development (padrão)
-ENVIRONMENT=dev docker-compose up -d
-
-# Staging
-ENVIRONMENT=staging docker-compose up -d
-
-# Production
-ENVIRONMENT=production docker-compose --env-file .env.production.local up -d
+docker-compose up -d
 ```
 
 #### 4. Executar a API (opcional, sem Docker)
@@ -107,7 +85,7 @@ ENVIRONMENT=production docker-compose --env-file .env.production.local up -d
 export JWT_SECRET=minha-chave-secreta-super-segura
 export SERVER_PORT=1324
 export GOFF_ENDPOINT=http://localhost:1031
-export ENVIRONMENT=dev
+export ENVIRONMENT=development
 
 # Executar
 go run src/cmd/server/main.go
@@ -117,9 +95,7 @@ go run src/cmd/server/main.go
 
 ```bash
 make help           # Lista todos os comandos
-make dev-up         # Inicia development
-make staging-up     # Inicia staging
-make prod-up        # Inicia production
+make up             # Sobe tudo
 make test-flags     # Testa se está funcionando
 make backup-flags   # Backup das flags
 make clean          # Remove tudo
@@ -221,11 +197,10 @@ curl -X GET http://localhost:1324/api/v1/flags \
 
 ## Configuração das Feature Flags
 
-As flags são configuradas nos arquivos YAML em `/flags`:
+As flags são configuradas nos arquivos YAML em `/flags` (um arquivo por app):
 
-- `front.yaml` - Flags do frontend/mobile
-- `api.yaml` - Flags da API
 - `shared.yaml` - Flags compartilhadas
+- `flutter.yaml` - Flags do app Flutter
 
 ### Exemplo de targeting por usuário:
 ```yaml
@@ -339,7 +314,7 @@ Este projeto serve como **centro único** para gerenciar flags de múltiplas apl
 ```
 
 **Como funciona:**
-1. Relay Proxy lê flags de `flags/{app}/{env}.yaml`
+1. Relay Proxy lê flags de `flags/*.yaml`
 2. Flutter chama Flag API via HTTP (bulk evaluation)
 3. Outras APIs Go usam SDK OpenFeature direto (on-demand)
 4. Mudanças nos YAMLs são detectadas automaticamente

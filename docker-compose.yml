@@ -5,7 +5,7 @@ services:
       - "1031:1031"
     volumes:
       - ./flags:/goff/flags
-      - ./goff-proxy-dev.yaml:/goff/goff-proxy.yaml
+      - ./goff-proxy.yaml:/goff/goff-proxy.yaml
     restart: unless-stopped
     networks:
       - bettercity_local
