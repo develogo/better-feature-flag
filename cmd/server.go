@@ -15,7 +15,7 @@ import (
 var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Start the feature flag proxy server",
-	Long:  `Start the HTTP server that proxies feature flag requests with authentication.`,
+	Long:  `Start the HTTP server that proxies feature flag requests with authentication..`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fx.New(
 			config.Module,
