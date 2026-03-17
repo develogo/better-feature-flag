@@ -24,3 +24,4 @@ services:
 networks:
   default:
     name: bettercity_local
+    external: true
