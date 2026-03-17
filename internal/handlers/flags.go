@@ -11,32 +11,45 @@ import (
 )
 
 type FlagsHandler struct {
-	service *services.FeatureFlagService
-	logger  *slog.Logger
+	evaluator services.FeatureFlagEvaluator
+	registry  services.FlagRegistry
+	logger    *slog.Logger
 }
 
-func NewFlagsHandler(service *services.FeatureFlagService, logger *slog.Logger) *FlagsHandler {
+func NewFlagsHandler(evaluator services.FeatureFlagEvaluator, registry services.FlagRegistry, logger *slog.Logger) *FlagsHandler {
 	return &FlagsHandler{
-		service: service,
-		logger:  logger,
+		evaluator: evaluator,
+		registry:  registry,
+		logger:    logger,
 	}
 }
 
 func (h *FlagsHandler) GetFlags(c echo.Context) error {
 	ctx := c.Request().Context()
-
-	// Obtém contexto do cliente (populado pelo middleware)
 	clientCtx := middleware.GetClientContext(c)
 
-	h.logger.Info("evaluating all flags",
+	appName := c.QueryParam("app")
+	if appName == "" {
+		appName = "flutter"
+	}
+
+	flagDefs, err := h.registry.GetFlagsForApp(appName)
+	if err != nil {
+		h.logger.Warn("unknown app requested", slog.String("app", appName))
+		return c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error: "Unknown application: " + appName,
+		})
+	}
+
+	h.logger.Info("evaluating flags",
+		slog.String("app", appName),
 		slog.String("targeting_key", clientCtx.GetTargetingKey()),
 		slog.String("app_version", clientCtx.AppVersion),
 		slog.String("platform", clientCtx.Platform),
 		slog.Bool("authenticated", clientCtx.IsAuthenticated()),
 	)
 
-	// Avalia todas as flags (bulk para frontend)
-	flags, err := h.service.EvaluateAllFlags(ctx, clientCtx)
+	flags, err := h.evaluator.EvaluateFlags(ctx, flagDefs, clientCtx)
 	if err != nil {
 		h.logger.Error("failed to evaluate flags", slog.String("error", err.Error()))
 		return c.JSON(http.StatusInternalServerError, models.ErrorResponse{

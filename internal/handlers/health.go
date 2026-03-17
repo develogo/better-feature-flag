@@ -10,30 +10,38 @@ import (
 )
 
 type HealthHandler struct {
-	service *services.FeatureFlagService
-	logger  *slog.Logger
+	evaluator services.FeatureFlagEvaluator
+	registry  services.FlagRegistry
+	logger    *slog.Logger
 }
 
-func NewHealthHandler(service *services.FeatureFlagService, logger *slog.Logger) *HealthHandler {
+func NewHealthHandler(evaluator services.FeatureFlagEvaluator, registry services.FlagRegistry, logger *slog.Logger) *HealthHandler {
 	return &HealthHandler{
-		service: service,
-		logger:  logger,
+		evaluator: evaluator,
+		registry:  registry,
+		logger:    logger,
 	}
 }
 
-// Health é o liveness probe - verifica se a aplicação está rodando
 func (h *HealthHandler) Health(c echo.Context) error {
 	return c.JSON(http.StatusOK, models.HealthResponse{
 		Status: "ok",
 	})
 }
 
-// Ready é o readiness probe - verifica se a aplicação está pronta para receber tráfego
 func (h *HealthHandler) Ready(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// Verifica conectividade com GO Feature Flag
-	if err := h.service.HealthCheck(ctx); err != nil {
+	flags, err := h.registry.GetAnyFlags()
+	if err != nil {
+		h.logger.Error("readiness check failed: no flags available", slog.String("error", err.Error()))
+		return c.JSON(http.StatusServiceUnavailable, models.HealthResponse{
+			Status:  "unavailable",
+			Message: "No flags configured",
+		})
+	}
+
+	if err := h.evaluator.HealthCheck(ctx, flags); err != nil {
 		h.logger.Error("readiness check failed", slog.String("error", err.Error()))
 		return c.JSON(http.StatusServiceUnavailable, models.HealthResponse{
 			Status:  "unavailable",

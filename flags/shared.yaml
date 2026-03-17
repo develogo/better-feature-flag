@@ -1,21 +1,21 @@
 # ===== SHARED FLAGS =====
 # Flags compartilhadas entre todas as aplicações
 
-maintenance-mode:
+maintenance_mode:
   variations:
     active: true
     inactive: false
   defaultRule:
     variation: inactive
 
-redis-cache-enabled:
+redis_cache_enabled:
   variations:
     enabled: true
     disabled: false
   defaultRule:
     variation: enabled
 
-log-level:
+log_level:
   variations:
     debug: "debug"
     info: "info"
@@ -24,7 +24,7 @@ log-level:
   defaultRule:
     variation: warn
 
-rate-limit-enabled:
+rate_limit_enabled:
   variations:
     enabled: true
     disabled: false

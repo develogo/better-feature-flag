@@ -9,16 +9,16 @@ import (
 )
 
 type AuthMiddleware struct {
-	keycloakService *services.KeycloakService
+	tokenValidator services.TokenValidator
 }
 
-func NewAuthMiddleware(keycloakService *services.KeycloakService) *AuthMiddleware {
+func NewAuthMiddleware(tokenValidator services.TokenValidator) *AuthMiddleware {
 	return &AuthMiddleware{
-		keycloakService: keycloakService,
+		tokenValidator: tokenValidator,
 	}
 }
 
-// OptionalJWT extrai o JWT se presente, mas não falha se ausente
+// OptionalJWT extrai o JWT se presente, mas nao falha se ausente
 func (m *AuthMiddleware) OptionalJWT() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -28,7 +28,7 @@ func (m *AuthMiddleware) OptionalJWT() echo.MiddlewareFunc {
 			authHeader := c.Request().Header.Get("Authorization")
 			if authHeader != "" {
 				tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-				if claims, err := m.keycloakService.ValidateToken(c.Request().Context(), tokenString); err == nil {
+				if claims, err := m.tokenValidator.ValidateToken(c.Request().Context(), tokenString); err == nil {
 					clientCtx.UserID = claims.Sub
 					clientCtx.Email = claims.Email
 					clientCtx.Username = claims.Username

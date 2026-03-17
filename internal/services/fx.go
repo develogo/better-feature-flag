@@ -6,7 +6,17 @@ import (
 
 var Module = fx.Module("services",
 	fx.Provide(
-		NewFeatureFlagService,
-		NewKeycloakService,
+		fx.Annotate(
+			NewFeatureFlagService,
+			fx.As(new(FeatureFlagEvaluator)),
+		),
+		fx.Annotate(
+			NewKeycloakService,
+			fx.As(new(TokenValidator)),
+		),
+		fx.Annotate(
+			NewFlagRegistryService,
+			fx.As(new(FlagRegistry)),
+		),
 	),
 )

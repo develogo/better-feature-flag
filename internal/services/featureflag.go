@@ -35,14 +35,14 @@ func NewFeatureFlagService(cfg *config.Config, logger *slog.Logger) (*FeatureFla
 	}, nil
 }
 
-func (s *FeatureFlagService) EvaluateAllFlags(ctx context.Context, clientCtx *models.ClientContext) (map[string]interface{}, error) {
+func (s *FeatureFlagService) EvaluateFlags(ctx context.Context, flagDefs []models.FlagDefinition, clientCtx *models.ClientContext) (map[string]interface{}, error) {
 	evalCtx := s.buildEvaluationContext(clientCtx)
-	flags := make(map[string]interface{}, len(FrontendFlagDefinitions))
+	flags := make(map[string]interface{}, len(flagDefs))
 	defaultedCount := 0
 
-	for _, def := range FrontendFlagDefinitions {
+	for _, def := range flagDefs {
 		switch def.Type {
-		case FlagValueTypeBool:
+		case models.FlagValueTypeBool:
 			defaultValue, ok := def.Default.(bool)
 			if !ok {
 				defaultedCount++
@@ -64,7 +64,7 @@ func (s *FeatureFlagService) EvaluateAllFlags(ctx context.Context, clientCtx *mo
 				continue
 			}
 			flags[def.Name] = value
-		case FlagValueTypeString:
+		case models.FlagValueTypeString:
 			defaultValue, ok := def.Default.(string)
 			if !ok {
 				defaultedCount++
@@ -75,6 +75,57 @@ func (s *FeatureFlagService) EvaluateAllFlags(ctx context.Context, clientCtx *mo
 				continue
 			}
 			value, err := s.client.StringValue(ctx, def.Name, defaultValue, evalCtx)
+			if err != nil {
+				defaultedCount++
+				flags[def.Name] = defaultValue
+				s.logger.Warn("flag evaluation failed; using default",
+					slog.String("flag", def.Name),
+					slog.String("type", string(def.Type)),
+					slog.String("error", err.Error()),
+				)
+				continue
+			}
+			flags[def.Name] = value
+		case models.FlagValueTypeInt:
+			var defaultInt64 int64
+			switch v := def.Default.(type) {
+			case int:
+				defaultInt64 = int64(v)
+			case int64:
+				defaultInt64 = v
+			case float64:
+				defaultInt64 = int64(v)
+			default:
+				defaultedCount++
+				flags[def.Name] = int64(0)
+				s.logger.Warn("invalid int flag default; using 0",
+					slog.String("flag", def.Name),
+				)
+				continue
+			}
+			value, err := s.client.IntValue(ctx, def.Name, defaultInt64, evalCtx)
+			if err != nil {
+				defaultedCount++
+				flags[def.Name] = defaultInt64
+				s.logger.Warn("flag evaluation failed; using default",
+					slog.String("flag", def.Name),
+					slog.String("type", string(def.Type)),
+					slog.String("error", err.Error()),
+				)
+				continue
+			}
+			flags[def.Name] = value
+		case models.FlagValueTypeFloat:
+			defaultValue, ok := def.Default.(float64)
+			if !ok {
+				defaultedCount++
+				flags[def.Name] = 0.0
+				s.logger.Warn("invalid float flag default; using 0.0",
+					slog.String("flag", def.Name),
+				)
+				continue
+			}
+			value, err := s.client.FloatValue(ctx, def.Name, defaultValue, evalCtx)
 			if err != nil {
 				defaultedCount++
 				flags[def.Name] = defaultValue
@@ -125,8 +176,11 @@ func (s *FeatureFlagService) buildEvaluationContext(clientCtx *models.ClientCont
 	)
 }
 
-func (s *FeatureFlagService) HealthCheck(ctx context.Context) error {
+func (s *FeatureFlagService) HealthCheck(ctx context.Context, flags []models.FlagDefinition) error {
+	if len(flags) == 0 {
+		return fmt.Errorf("no flags available for health check")
+	}
 	evalCtx := of.NewEvaluationContext("health-check", map[string]interface{}{})
-	_, err := s.client.BooleanValue(ctx, "maintenance_mode", false, evalCtx)
+	_, err := s.client.BooleanValue(ctx, flags[0].Name, false, evalCtx)
 	return err
 }

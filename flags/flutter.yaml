@@ -1,5 +1,5 @@
 # ===== FLUTTER APP =====
-dark-mode:
+dark_mode:
   variations:
     enabled: true
     disabled: false

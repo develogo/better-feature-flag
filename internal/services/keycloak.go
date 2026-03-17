@@ -2,6 +2,7 @@ package services
 
 import (
 	"better-feature-flag/internal/config"
+	"better-feature-flag/internal/models"
 	"context"
 	"fmt"
 	"log/slog"
@@ -17,13 +18,6 @@ type KeycloakService struct {
 	clientID     string
 	clientSecret string
 	logger       *slog.Logger
-}
-
-type TokenClaims struct {
-	Sub      string
-	Email    string
-	Username string
-	Active   bool
 }
 
 type JWTClaims struct {
@@ -46,7 +40,7 @@ func NewKeycloakService(cfg *config.Config, logger *slog.Logger) *KeycloakServic
 }
 
 // ValidateToken valida o token via introspection endpoint do Keycloak e extrai claims
-func (s *KeycloakService) ValidateToken(ctx context.Context, token string) (*TokenClaims, error) {
+func (s *KeycloakService) ValidateToken(ctx context.Context, token string) (*models.TokenClaims, error) {
 	// Realiza introspection do token
 	rptResult, err := s.client.RetrospectToken(ctx, token, s.clientID, s.clientSecret, s.realm)
 	if err != nil {
@@ -54,7 +48,7 @@ func (s *KeycloakService) ValidateToken(ctx context.Context, token string) (*Tok
 		return nil, fmt.Errorf("failed to introspect token: %w", err)
 	}
 
-	// Verifica se o token está ativo
+	// Verifica se o token esta ativo
 	if rptResult.Active == nil || !*rptResult.Active {
 		s.logger.Debug("token is not active")
 		return nil, fmt.Errorf("token is not active")
@@ -78,7 +72,7 @@ func (s *KeycloakService) ValidateToken(ctx context.Context, token string) (*Tok
 }
 
 // extractClaimsFromJWT decodifica o JWT sem validar a assinatura (apenas para extrair claims)
-func (s *KeycloakService) extractClaimsFromJWT(token string) (*TokenClaims, error) {
+func (s *KeycloakService) extractClaimsFromJWT(token string) (*models.TokenClaims, error) {
 	// Separa as partes do JWT
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
@@ -97,7 +91,7 @@ func (s *KeycloakService) extractClaimsFromJWT(token string) (*TokenClaims, erro
 		return nil, fmt.Errorf("failed to parse JWT claims")
 	}
 
-	return &TokenClaims{
+	return &models.TokenClaims{
 		Sub:      jwtClaims.Sub,
 		Email:    jwtClaims.Email,
 		Username: jwtClaims.PreferredUsername,
