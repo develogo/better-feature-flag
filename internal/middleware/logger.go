@@ -17,7 +17,10 @@ func Logger(logger *slog.Logger) echo.MiddlewareFunc {
 			req := c.Request()
 			res := c.Response()
 
+			requestID, _ := c.Get("request_id").(string)
+
 			logger.Info("request",
+				slog.String("request_id", requestID),
 				slog.String("method", req.Method),
 				slog.String("path", req.URL.Path),
 				slog.Int("status", res.Status),

@@ -20,9 +20,21 @@ var Module = fx.Module("server",
 	fx.Invoke(RegisterRoutes),
 )
 
-func ProvideLogger() *slog.Logger {
+func ProvideLogger(cfg *config.Config) *slog.Logger {
+	level := slog.LevelInfo
+	switch cfg.App.LogLevel {
+	case "debug":
+		level = slog.LevelDebug
+	case "info":
+		level = slog.LevelInfo
+	case "warn":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
+	}
+
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
+		Level: level,
 	}))
 	slog.SetDefault(logger)
 	return logger
@@ -45,8 +57,9 @@ type RouteParams struct {
 	FlagsHandler     *handlers.FlagsHandler
 	HealthHandler    *handlers.HealthHandler
 	AuthMiddleware   *middleware.AuthMiddleware
-	CORSMiddleware   echo.MiddlewareFunc `name:"cors"`
-	LoggerMiddleware echo.MiddlewareFunc `name:"logger"`
+	CORSMiddleware      echo.MiddlewareFunc `name:"cors"`
+	LoggerMiddleware    echo.MiddlewareFunc `name:"logger"`
+	RequestIDMiddleware echo.MiddlewareFunc `name:"requestid"`
 }
 
 func RegisterRoutes(p RouteParams) {
@@ -58,6 +71,7 @@ func RegisterRoutes(p RouteParams) {
 	)
 
 	// Middlewares globais
+	p.Echo.Use(p.RequestIDMiddleware)
 	p.Echo.Use(p.CORSMiddleware)
 	p.Echo.Use(p.LoggerMiddleware)
 

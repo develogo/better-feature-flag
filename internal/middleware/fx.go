@@ -15,5 +15,9 @@ var Module = fx.Module("middleware",
 			Logger,
 			fx.ResultTags(`name:"logger"`),
 		),
+		fx.Annotate(
+			RequestID,
+			fx.ResultTags(`name:"requestid"`),
+		),
 	),
 )
