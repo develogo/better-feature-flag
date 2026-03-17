@@ -7,6 +7,7 @@ import (
 var Module = fx.Module("middleware",
 	fx.Provide(
 		NewAuthMiddleware,
+		NewRateLimiter,
 		fx.Annotate(
 			CORS,
 			fx.ResultTags(`name:"cors"`),

@@ -50,13 +50,14 @@ func ProvideEcho() *echo.Echo {
 type RouteParams struct {
 	fx.In
 
-	Lifecycle        fx.Lifecycle
-	Logger           *slog.Logger
-	Config           *config.Config
-	Echo             *echo.Echo
-	FlagsHandler     *handlers.FlagsHandler
-	HealthHandler    *handlers.HealthHandler
-	AuthMiddleware   *middleware.AuthMiddleware
+	Lifecycle           fx.Lifecycle
+	Logger              *slog.Logger
+	Config              *config.Config
+	Echo                *echo.Echo
+	FlagsHandler        *handlers.FlagsHandler
+	HealthHandler       *handlers.HealthHandler
+	AuthMiddleware      *middleware.AuthMiddleware
+	RateLimiter         *middleware.RateLimiter
 	CORSMiddleware      echo.MiddlewareFunc `name:"cors"`
 	LoggerMiddleware    echo.MiddlewareFunc `name:"logger"`
 	RequestIDMiddleware echo.MiddlewareFunc `name:"requestid"`
@@ -81,6 +82,7 @@ func RegisterRoutes(p RouteParams) {
 
 	// API routes
 	api := p.Echo.Group("/api/v1")
+	api.Use(p.RateLimiter.Middleware())
 	api.Use(p.AuthMiddleware.OptionalJWT())
 	api.GET("/flags", p.FlagsHandler.GetFlags)
 

@@ -38,3 +38,6 @@ __debug_bin*
 .DS_Store
 Thumbs.db
 
+# Build output
+bin/
+

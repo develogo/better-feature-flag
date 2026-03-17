@@ -51,6 +51,23 @@ func Load() (*Config, error) {
 	viper.SetDefault("app.flags_file", "config/flags.yaml")
 	viper.SetDefault("app.rate_limit", 100)
 
+	// Load .env file if present (for local development secrets)
+	if data, err := os.ReadFile(".env"); err == nil {
+		for _, line := range strings.Split(string(data), "\n") {
+			line = strings.TrimSpace(line)
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
+			}
+			if k, v, ok := strings.Cut(line, "="); ok {
+				k = strings.TrimSpace(k)
+				v = strings.TrimSpace(v)
+				if os.Getenv(k) == "" {
+					os.Setenv(k, v)
+				}
+			}
+		}
+	}
+
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}

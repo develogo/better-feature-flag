@@ -3,6 +3,8 @@ app:
   port: "1324"
   mode: "local"
   log_level: "debug"
+  cors_origins:
+    - "*"
 
 goff:
   endpoint: "http://localhost:1031"
@@ -12,8 +14,4 @@ keycloak:
   url: "https://auth.bettercity.app"
   realm: "bettercity"
   client_id: "better-feature-flag"
-  client_secret: "AZJsYo1d5mEP3FwFeZvNQtCloJiO6g0p"
-
-jwt:
-  secret: "local-dev-secret"
-
+  client_secret: "" # Set via KEYCLOAK_CLIENT_SECRET env var or .env file
