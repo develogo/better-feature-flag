@@ -4,7 +4,7 @@ pollingInterval: 1000
 retrievers:
   # Flutter flags
   - kind: file
-    path: /goff/flags/flutter.yaml
+    path: /goff/flags/apps/flutter.yaml
 
   # Shared flags
   - kind: file

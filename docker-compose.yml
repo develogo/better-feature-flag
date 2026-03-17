@@ -1,5 +1,5 @@
 services:
-  go-feature-flag:
+  relay:
     image: gofeatureflag/go-feature-flag:latest
     ports:
       - "1031:1031"
@@ -7,10 +7,20 @@ services:
       - ./flags:/goff/flags
       - ./goff-proxy.yaml:/goff/goff-proxy.yaml
     restart: unless-stopped
-    networks:
-      - bettercity_local
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "1324:80"
+    environment:
+      - APP_ENV=local
+      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET}
+    depends_on:
+      - relay
+    restart: unless-stopped
 
 networks:
-  bettercity_local:
-    external: true
+  default:
     name: bettercity_local
