@@ -5,4 +5,4 @@ max_viewport_diagonal_meters:
     medium: 25000
     large: 50000
   defaultRule:
-    variation: small
+    variation: medium
