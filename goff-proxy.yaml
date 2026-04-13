@@ -6,6 +6,10 @@ retrievers:
   - kind: file
     path: /goff/flags/apps/flutter.yaml
 
+  # API flags
+  - kind: file
+    path: /goff/flags/apps/api.yaml
+
   # Shared flags
   - kind: file
     path: /goff/flags/shared.yaml

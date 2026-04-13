@@ -1,0 +1,8 @@
+# ===== GO API =====
+max_viewport_diagonal_meters:
+  variations:
+    small: 8000
+    medium: 25000
+    large: 50000
+  defaultRule:
+    variation: medium
