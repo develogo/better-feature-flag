@@ -6,3 +6,13 @@ max_viewport_diagonal_meters:
     large: 50000
   defaultRule:
     variation: medium
+
+# Kill switch for scan-mitigation security middlewares (BadPathBlocklist +
+# RateLimiter). Default enabled. Flip to disabled for emergency rollback
+# without redeploy — CF remains first line of defense.
+security_middlewares_enabled:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: enabled
