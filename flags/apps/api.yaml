@@ -1,9 +1,14 @@
 # ===== GO API =====
+# Values compensate the API-side Earth-radius fix (better-city-api-go PR #20):
+# previously calcDistanceInMeters scaled distances by ~0.215× due to a wrong
+# constant, so 25000 effectively gated viewports of ~116 km real diagonal.
+# After the API fix, calcDistanceInMeters returns real meters — these numbers
+# are multiplied by 6371/1371 ≈ 4.647 to preserve the prior operational limits.
 max_viewport_diagonal_meters:
   variations:
-    small: 8000
-    medium: 25000
-    large: 50000
+    small: 37000
+    medium: 116000
+    large: 232000
   defaultRule:
     variation: medium
 
